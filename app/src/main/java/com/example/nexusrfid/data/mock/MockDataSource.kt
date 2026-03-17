@@ -102,7 +102,7 @@ object MockDataSource {
         ),
         SearchTypeOption(
             key = "ean13",
-            label = "EAN-13",
+            label = "Ean-13",
             dialogTitle = "EAN-13",
             inputPlaceholder = "Digite o codigo EAN-13",
             numericInput = true

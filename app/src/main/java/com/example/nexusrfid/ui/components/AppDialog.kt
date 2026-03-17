@@ -48,7 +48,7 @@ fun AppDialog(
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.lg)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
             ) {
                 Column(
                     modifier = Modifier
@@ -58,17 +58,14 @@ fun AppDialog(
                             end = AppSpacing.lg,
                             top = AppSpacing.lg
                         ),
-                    verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.TextPrimary
-                    )
-                    Text(
-                        text = "Informe o valor para continuar.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TextSecondary
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppColors.TextPrimary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
 
@@ -77,7 +74,7 @@ fun AppDialog(
                     onValueChange = onValueChange,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp)
+                        .height(48.dp)
                         .padding(horizontal = AppSpacing.lg),
                     textStyle = MaterialTheme.typography.bodyMedium,
                     singleLine = true,
@@ -93,11 +90,11 @@ fun AppDialog(
                         keyboardType = if (numericInput) KeyboardType.Number else KeyboardType.Text
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = AppColors.FieldBackground,
-                        unfocusedContainerColor = AppColors.FieldBackground,
-                        disabledContainerColor = AppColors.FieldBackground,
-                        errorContainerColor = AppColors.FieldBackground,
-                        focusedBorderColor = AppColors.BrandSignalBlue.copy(alpha = 0.44f),
+                        focusedContainerColor = AppColors.CardSurface,
+                        unfocusedContainerColor = AppColors.CardSurface,
+                        disabledContainerColor = AppColors.CardSurface,
+                        errorContainerColor = AppColors.CardSurface,
+                        focusedBorderColor = AppColors.Divider,
                         unfocusedBorderColor = AppColors.Divider,
                         cursorColor = AppColors.PrimaryActionBlue,
                         focusedTextColor = AppColors.TextPrimary,
@@ -109,11 +106,11 @@ fun AppDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start = AppSpacing.md,
-                            end = AppSpacing.md,
-                            bottom = AppSpacing.md
+                            start = AppSpacing.lg,
+                            end = AppSpacing.lg,
+                            bottom = AppSpacing.lg
                         ),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text(

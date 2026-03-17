@@ -105,7 +105,8 @@ fun AppNavHost(
                     searchTargets = MockDataSource.searchTargets,
                     searchTypes = MockDataSource.searchTypes,
                     onMenuClick = onMenuClick,
-                    appState = appState
+                    appState = appState,
+                    initialSelectedTypeKey = "tag"
                 )
             }
         }

@@ -142,8 +142,7 @@ fun GlobalSearchVisualRegistryScreenshot() {
             searchTargets = MockDataSource.searchTargets,
             searchTypes = MockDataSource.searchTypes,
             onMenuClick = {},
-            initialSelectedTypeKey = "tag",
-            initialTagTargets = MockDataSource.rfidTagPreviewTargets
+            initialSelectedTypeKey = "tag"
         )
     }
 }

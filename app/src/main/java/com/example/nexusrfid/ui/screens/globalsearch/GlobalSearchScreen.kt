@@ -3,6 +3,7 @@ package com.example.nexusrfid.ui.screens.globalsearch
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,9 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.VolumeOff
+import androidx.compose.material.icons.outlined.VolumeUp
+import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -151,6 +155,7 @@ fun GlobalSearchScreen(
     val counterReadCount = if (isTagMode) readCount else searchSummary.readCount
     val counterFoundCount = if (isTagMode) foundCount else searchSummary.foundCount
     val leadingTarget = tagTargets.maxByOrNull { it.proximityPercent }
+    val soundEnabled = appState?.soundEnabled ?: true
 
     fun stopRfidSearch(resetFeedback: Boolean) {
         searchJob?.cancel()
@@ -186,8 +191,7 @@ fun GlobalSearchScreen(
         if (option.key == TagSearchTypeKey) {
             productInput = ""
             searchValue = ""
-            dialogValue = ""
-            dialogErrorMessage = null
+            openDialogFor(option)
         } else if (option.requiresManualEntry) {
             productInput = ""
             searchValue = ""
@@ -319,7 +323,7 @@ fun GlobalSearchScreen(
         onStartSearch = ::startSearch,
         onStopSearch = { stopRfidSearch(resetFeedback = false) },
         onClear = ::clearAll,
-        onAddTag = { openDialogFor(searchTypes.first { it.key == TagSearchTypeKey }) },
+        onAddTag = { showTypeSheet = true },
         onClearTags = {
             stopRfidSearch(resetFeedback = true)
             tagTargets = emptyList()
@@ -327,6 +331,10 @@ fun GlobalSearchScreen(
         onRemoveTag = { tagToRemove ->
             tagTargets = tagTargets.filterNot { it.epc == tagToRemove }
             refreshFoundCount()
+        },
+        soundEnabled = soundEnabled,
+        onToggleSound = {
+            appState?.let { state -> state.updateSoundEnabled(!state.soundEnabled) }
         },
         onDecreasePower = {
             appState?.let { state ->
@@ -361,7 +369,6 @@ fun GlobalSearchScreen(
     if (showTypeSheet) {
         SearchTypeSheet(
             options = searchTypes,
-            selectedKey = selectedType.key,
             onSelect = ::selectSearchType,
             onDismiss = { showTypeSheet = false }
         )
@@ -906,6 +913,227 @@ private fun SearchResultsCard(
     }
 }
 
+@Composable
+private fun LegacyActionRow(
+    readingActive: Boolean,
+    soundEnabled: Boolean,
+    onStart: () -> Unit,
+    onStop: () -> Unit,
+    onPowerClick: () -> Unit,
+    onSoundClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        LegacyActionButton(
+            label = "Iniciar",
+            icon = Icons.Outlined.PlayArrow,
+            onClick = onStart,
+            active = readingActive
+        )
+        LegacyActionButton(
+            label = "Parar",
+            icon = Icons.Outlined.Stop,
+            onClick = onStop
+        )
+        LegacyActionButton(
+            label = "Potencia",
+            icon = Icons.Outlined.Wifi,
+            onClick = onPowerClick
+        )
+        LegacyActionButton(
+            label = "Som",
+            icon = if (soundEnabled) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
+            onClick = onSoundClick,
+            active = soundEnabled
+        )
+    }
+}
+
+@Composable
+private fun LegacyActionButton(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    active: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val tint = if (active) AppColors.TopBarBlue else AppColors.TextSecondary
+    Column(
+        modifier = modifier
+            .weight(1f)
+            .clickable(onClick = onClick)
+            .padding(vertical = AppSpacing.xs),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(22.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = AppColors.TextSecondary
+        )
+    }
+}
+
+@Composable
+private fun LegacyTargetsCard(
+    readCount: Int,
+    foundCount: Int,
+    tagCount: Int,
+    onAddTarget: () -> Unit,
+    onClearTargets: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val panelColor = androidx.compose.ui.graphics.Color(0xFFEFEFEF)
+    val panelBorder = androidx.compose.ui.graphics.Color(0xFFD9D9D9)
+    val removeColor = androidx.compose.ui.graphics.Color(0xFFD06A6A)
+    val message = if (tagCount == 0) {
+        "Nenhum target para buscar ..."
+    } else {
+        "$tagCount target(s) adicionados"
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = AppShapes.card,
+        colors = CardDefaults.cardColors(containerColor = panelColor),
+        border = BorderStroke(1.dp, panelBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+        ) {
+            CounterBar(
+                readCount = readCount,
+                foundCount = foundCount
+            )
+            Text(
+                text = message,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary,
+                textAlign = TextAlign.Center
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            ) {
+                LegacyTargetButton(
+                    text = "Adicionar Targets",
+                    onClick = onAddTarget,
+                    modifier = Modifier.weight(1f),
+                    borderColor = AppColors.PositiveGreen,
+                    contentColor = AppColors.PositiveGreen
+                )
+                LegacyTargetButton(
+                    text = "Remover Targets",
+                    onClick = onClearTargets,
+                    modifier = Modifier.weight(1f),
+                    borderColor = removeColor,
+                    contentColor = removeColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegacyTargetButton(
+    text: String,
+    onClick: () -> Unit,
+    borderColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        shape = AppShapes.button,
+        border = BorderStroke(1.dp, borderColor),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = AppColors.CardSurface,
+            contentColor = contentColor
+        )
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun PowerDialog(
+    powerLevel: Int,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+            border = BorderStroke(1.dp, AppColors.Divider),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Text(
+                    text = "Potencia do leitor",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.TextPrimary
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PowerStepButton(label = "-", onClick = onDecrease)
+                    Text(
+                        text = powerLevel.toString(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .border(1.dp, AppColors.Divider, AppShapes.input)
+                            .padding(vertical = AppSpacing.sm),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = AppColors.TextPrimary
+                    )
+                    PowerStepButton(label = "+", onClick = onIncrease, filled = true)
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    androidx.compose.material3.TextButton(onClick = onDismiss) {
+                        Text(
+                            text = "Fechar",
+                            color = AppColors.TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun matchesSearchType(
     product: ProductListItem,
     searchTypeKey: String,
@@ -1030,6 +1258,8 @@ private fun GlobalSearchContent(
     onAddTag: () -> Unit,
     onClearTags: () -> Unit,
     onRemoveTag: (String) -> Unit,
+    soundEnabled: Boolean,
+    onToggleSound: () -> Unit,
     onDecreasePower: () -> Unit,
     onIncreasePower: () -> Unit,
     collectorLabel: String,
@@ -1074,84 +1304,54 @@ private fun GlobalSearchContent(
         else -> "Conecte o coletor e use Iniciar para comecar a localizacao."
     }
 
+    val baseBackground = if (isTagMode) AppColors.CardSurface else AppColors.ScreenBackground
+    var showPowerDialog by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(AppColors.ScreenBackground)
+            .background(baseBackground)
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = AppColors.ScreenBackground,
+            containerColor = baseBackground,
             topBar = {
                 AppTopBar(
-                    title = "Buscar Produtos",
-                    eyebrow = "Nexus RFID",
-                    onNavigationClick = onMenuClick
+                    title = "Busca Global",
+                    eyebrow = null,
+                    onNavigationClick = onMenuClick,
+                    navigationIconBackground = false,
+                    showDivider = false
                 )
             }
         ) { innerPadding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(AppColors.ScreenBackground)
+                    .background(baseBackground)
                     .padding(innerPadding),
-                contentPadding = PaddingValues(AppSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                contentPadding = PaddingValues(horizontal = AppSpacing.lg, vertical = AppSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
             ) {
-                item {
-                    SearchOverviewCard(
-                        currentType = selectedType.label,
-                        isTagMode = isTagMode,
-                        collectorLabel = collectorLabel,
-                        collectorStatus = collectorStatus,
-                        connectedDeviceName = connectedDeviceName,
-                        readingActive = readingActive,
-                        powerLevel = powerLevel,
-                        searchValue = searchValue,
-                        tagCount = tagCount,
-                        onStartSearch = onStartSearch,
-                        onStopSearch = onStopSearch,
-                        onOpenType = onOpenType,
-                        onClear = onClear,
-                        onDecreasePower = onDecreasePower,
-                        onIncreasePower = onIncreasePower
-                    )
-                }
-
-                if (!isTagMode) {
-                    item {
-                        SearchHeader(
-                            value = searchInput,
-                            onValueChange = onSearchInputChange,
-                            onSearchClick = onTextSearch,
-                            sectionTitle = "Consulta",
-                            placeholder = "Nome, codigo, reduzido ou EAN"
-                        )
-                    }
-                }
-
-                item {
-                    CounterBar(
-                        readCount = readCount,
-                        foundCount = foundCount
-                    )
-                }
-
-                item {
-                    TargetSelector(
-                        targets = searchTargets,
-                        products = products,
-                        selectedKey = selectedTargetKey,
-                        onSelect = onSelectTarget
-                    )
-                }
-
                 if (isTagMode) {
                     item {
-                        TagCommandCard(
+                        LegacyActionRow(
+                            readingActive = readingActive,
+                            soundEnabled = soundEnabled,
+                            onStart = onStartSearch,
+                            onStop = onStopSearch,
+                            onPowerClick = { showPowerDialog = true },
+                            onSoundClick = onToggleSound
+                        )
+                    }
+
+                    item {
+                        LegacyTargetsCard(
+                            readCount = readCount,
+                            foundCount = foundCount,
                             tagCount = tagCount,
-                            onAddTag = onAddTag,
-                            onClearTags = onClearTags
+                            onAddTarget = onAddTag,
+                            onClearTargets = onClearTags
                         )
                     }
 
@@ -1164,81 +1364,130 @@ private fun GlobalSearchContent(
                         }
                     }
 
-                    item {
-                        ProximityIndicator(
-                            title = proximityTitle,
-                            percent = proximityPercent,
-                            label = proximityLabel,
-                            supportingText = proximitySupportingText
-                        )
-                    }
-                }
-
-                if (!errorMessage.isNullOrBlank()) {
-                    item {
-                        InlineNoticeCard(message = errorMessage)
-                    }
-                }
-
-                item {
-                    when {
-                        isTagMode && tagTargets.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Nenhuma tag adicionada",
-                                supportingText = "Abra o popup, informe o EPC com 24 caracteres e monte a lista de busca.",
-                                actionLabel = "Adicionar tag",
-                                onAction = onAddTag
+                    if (tagTargets.isNotEmpty() || readingActive) {
+                        item {
+                            ProximityIndicator(
+                                title = proximityTitle,
+                                percent = proximityPercent,
+                                label = proximityLabel,
+                                supportingText = proximitySupportingText
                             )
                         }
+                    }
 
-                        isTagMode && matchedProducts.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Sem produto vinculado",
-                                supportingText = "A busca RFID continua funcionando mesmo quando o cadastro do item ainda nao veio da API."
-                            )
+                    if (!errorMessage.isNullOrBlank()) {
+                        item {
+                            InlineNoticeCard(message = errorMessage)
                         }
+                    }
 
-                        isTagMode -> {
+                    if (matchedProducts.isNotEmpty()) {
+                        item {
                             SearchResultsCard(
                                 products = matchedProducts,
                                 selectedTarget = selectedTarget.label
                             )
                         }
+                    }
+                } else {
+                    item {
+                        SearchOverviewCard(
+                            currentType = selectedType.label,
+                            isTagMode = false,
+                            collectorLabel = collectorLabel,
+                            collectorStatus = collectorStatus,
+                            connectedDeviceName = connectedDeviceName,
+                            readingActive = readingActive,
+                            powerLevel = powerLevel,
+                            searchValue = searchValue,
+                            tagCount = tagCount,
+                            onStartSearch = onStartSearch,
+                            onStopSearch = onStopSearch,
+                            onOpenType = onOpenType,
+                            onClear = onClear,
+                            onDecreasePower = onDecreasePower,
+                            onIncreasePower = onIncreasePower
+                        )
+                    }
 
-                        selectedType.requiresManualEntry && searchValue.isBlank() -> {
-                            EmptyStateBox(
-                                title = "Informe o valor da consulta",
-                                supportingText = "Use ${selectedType.label} para localizar o item.",
-                                actionLabel = "Escolher ${selectedType.label}",
-                                onAction = onOpenType
-                            )
+                    item {
+                        SearchHeader(
+                            value = searchInput,
+                            onValueChange = onSearchInputChange,
+                            onSearchClick = onTextSearch,
+                            sectionTitle = "Consulta",
+                            placeholder = "Nome, codigo, reduzido ou EAN"
+                        )
+                    }
+
+                    item {
+                        CounterBar(
+                            readCount = readCount,
+                            foundCount = foundCount
+                        )
+                    }
+
+                    item {
+                        TargetSelector(
+                            targets = searchTargets,
+                            products = products,
+                            selectedKey = selectedTargetKey,
+                            onSelect = onSelectTarget
+                        )
+                    }
+
+                    if (!errorMessage.isNullOrBlank()) {
+                        item {
+                            InlineNoticeCard(message = errorMessage)
                         }
+                    }
 
-                        selectedType.key == ProductSearchTypeKey && searchInput.isBlank() && searchValue.isBlank() -> {
-                            EmptyStateBox(
-                                title = "Digite o produto",
-                                supportingText = "Informe nome ou codigo e use Buscar."
-                            )
-                        }
+                    item {
+                        when {
+                            selectedType.requiresManualEntry && searchValue.isBlank() -> {
+                                EmptyStateBox(
+                                    title = "Informe o valor da consulta",
+                                    supportingText = "Use ${selectedType.label} para localizar o item.",
+                                    actionLabel = "Escolher ${selectedType.label}",
+                                    onAction = onOpenType
+                                )
+                            }
 
-                        filteredProducts.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Nenhum produto localizado",
-                                supportingText = "Tente outro valor ou mude o tipo de busca.",
-                                actionLabel = "Trocar tipo",
-                                onAction = onOpenType
-                            )
-                        }
+                            selectedType.key == ProductSearchTypeKey && searchInput.isBlank() && searchValue.isBlank() -> {
+                                EmptyStateBox(
+                                    title = "Digite o produto",
+                                    supportingText = "Informe nome ou codigo e use Buscar."
+                                )
+                            }
 
-                        else -> {
-                            SearchResultsCard(
-                                products = filteredProducts,
-                                selectedTarget = selectedTarget.label
-                            )
+                            filteredProducts.isEmpty() -> {
+                                EmptyStateBox(
+                                    title = "Nenhum produto localizado",
+                                    supportingText = "Tente outro valor ou mude o tipo de busca.",
+                                    actionLabel = "Trocar tipo",
+                                    onAction = onOpenType
+                                )
+                            }
+
+                            else -> {
+                                SearchResultsCard(
+                                    products = filteredProducts,
+                                    selectedTarget = selectedTarget.label
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showPowerDialog) {
+        PowerDialog(
+            powerLevel = powerLevel,
+            onDecrease = onDecreasePower,
+            onIncrease = onIncreasePower,
+            onDismiss = { showPowerDialog = false }
+        )
     }
 }

@@ -3,18 +3,23 @@ package com.example.nexusrfid.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalOffer
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
@@ -25,31 +30,27 @@ fun CounterBar(
     foundCount: Int,
     modifier: Modifier = Modifier
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val itemWidth = (maxWidth - AppSpacing.sm) / 2
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.md)
+    ) {
+        CounterItem(
+            label = "Lidas",
+            value = readCount.toString(),
+            backgroundColor = AppColors.DarkModal,
+            borderColor = AppColors.DarkModal,
+            contentColor = AppColors.TopBarOnBlue,
+            modifier = Modifier.weight(1f)
+        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-        ) {
-            CounterItem(
-                label = "Lidas",
-                value = readCount.toString(),
-                backgroundColor = AppColors.DarkModal,
-                borderColor = AppColors.DarkModal,
-                contentColor = AppColors.TopBarOnBlue,
-                modifier = Modifier.width(itemWidth)
-            )
-
-            CounterItem(
-                label = "Encontradas",
-                value = foundCount.toString(),
-                backgroundColor = AppColors.PositiveGreen,
-                borderColor = AppColors.PositiveBorder,
-                contentColor = AppColors.TopBarOnBlue,
-                modifier = Modifier.width(itemWidth)
-            )
-        }
+        CounterItem(
+            label = "Encontradas",
+            value = foundCount.toString(),
+            backgroundColor = AppColors.PositiveGreen,
+            borderColor = AppColors.PositiveGreen,
+            contentColor = AppColors.TopBarOnBlue,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 
@@ -63,41 +64,39 @@ private fun CounterItem(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .background(backgroundColor, AppShapes.card)
-            .border(1.dp, borderColor, AppShapes.card)
-            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
     ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelLarge,
-            color = contentColor.copy(alpha = 0.76f)
-        )
-
         Row(
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
         ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                color = contentColor
+            Icon(
+                imageVector = Icons.Outlined.LocalOffer,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = AppColors.TextSecondary
             )
             Text(
-                text = if (label == "Lidas") "leituras" else "localizadas",
+                text = label,
                 style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.76f)
+                color = AppColors.TextSecondary
             )
         }
 
-        Text(
-            text = if (label == "Lidas") {
-                "Total recebido pelo coletor"
-            } else {
-                "Tags alvo com leitura recente"
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = contentColor.copy(alpha = 0.68f)
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(26.dp)
+                .background(backgroundColor, AppShapes.input)
+                .border(1.dp, borderColor, AppShapes.input),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor
+            )
+        }
     }
 }

@@ -33,6 +33,8 @@ fun AppTopBar(
     navigationIcon: ImageVector = Icons.Outlined.Menu,
     navigationContentDescription: String = "Abrir menu",
     eyebrow: String? = "Nexus RFID",
+    navigationIconBackground: Boolean = true,
+    showDivider: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(
@@ -63,14 +65,20 @@ fun AppTopBar(
                 },
                 navigationIcon = {
                     if (onNavigationClick != null) {
-                        IconButton(
-                            onClick = onNavigationClick,
-                            modifier = Modifier
+                        val navigationModifier = if (navigationIconBackground) {
+                            Modifier
                                 .size(40.dp)
                                 .background(
                                     color = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
                                     shape = AppShapes.input
                                 )
+                        } else {
+                            Modifier.size(40.dp)
+                        }
+
+                        IconButton(
+                            onClick = onNavigationClick,
+                            modifier = navigationModifier
                         ) {
                             Icon(
                                 imageVector = navigationIcon,
@@ -89,7 +97,9 @@ fun AppTopBar(
                 )
             )
 
-            HorizontalDivider(color = AppColors.TopBarOnBlue.copy(alpha = 0.08f))
+            if (showDivider) {
+                HorizontalDivider(color = AppColors.TopBarOnBlue.copy(alpha = 0.08f))
+            }
         }
     }
 }
