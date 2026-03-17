@@ -156,7 +156,7 @@ private fun DrawerDestination(
                 color = AppColors.CardSurface
             ) {
                 DrawerMenu(
-                    items = MockDataSource.drawerItems,
+                    items = MockDataSource.drawerMenuItems,
                     version = MockDataSource.appVersion,
                     selectedRoute = currentRoute,
                     onItemClick = { item ->

@@ -33,7 +33,8 @@ class R6BluetoothReader(
         statusListener?.invoke(RfidConnectionState.Scanning, null)
         reader.stopScanBTDevices()
         reader.scanBTDevices { bluetoothDevice, rssi, _ ->
-            if (bluetoothDevice != null) {
+            // Filtro de proximidade: apenas dispositivos com sinal forte (acoplados)
+            if (bluetoothDevice != null && rssi >= -50) {
                 onDeviceFound(bluetoothDevice.toRfidDevice(rssi))
             }
         }

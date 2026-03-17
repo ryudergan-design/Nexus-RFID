@@ -45,6 +45,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -931,44 +939,65 @@ private fun ReaderRecognitionDialog(
     recognized: Boolean,
     onDismiss: () -> Unit
 ) {
-    val titleText = if (recognized) "Leitor Reconhecido" else "Nao Reconhecido"
-    val titleColor = if (recognized) {
-        AppColors.PositiveGreen
-    } else {
-        androidx.compose.ui.graphics.Color(0xFFD06A6A)
-    }
+    val titleText = if (recognized) "LEITOR RECONHECIDO" else "NAO RECONHECIDO"
+    val titleColor = if (recognized) AppColors.PositiveGreen else AppColors.DangerRed
+    
     val supportingText = if (recognized) {
-        "O leitor esta pronto para uso."
+        "O leitor respondeu aos sinais e esta pronto para a operacao."
     } else {
-        "O dispositivo nao respondeu como leitor RFID."
+        "O dispositivo conectou mas nao respondeu como um leitor RFID Nexus."
     }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .width(280.dp) // Tamanho fixo compacto
+                .wrapContentHeight(),
             shape = AppShapes.modal,
-            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
             border = BorderStroke(1.dp, AppColors.Divider),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(AppSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = titleText,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = titleColor
-                )
-                Text(
-                    text = supportingText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TextSecondary
-                )
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(titleColor.copy(alpha = 0.1f), CircleShape)
+                        .border(1.dp, titleColor.copy(alpha = 0.4f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (recognized) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                        contentDescription = null,
+                        tint = titleColor,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = titleText,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = titleColor,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(AppSpacing.xs))
+                    Text(
+                        text = supportingText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
                 ActionButtonPrimary(
-                    text = "Fechar",
+                    text = "FECHAR",
                     onClick = onDismiss
                 )
             }
