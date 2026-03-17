@@ -317,10 +317,12 @@ class NexusRfidAppState internal constructor(
         if (!soundEnabled) return
 
         val now = SystemClock.elapsedRealtime()
-        if (now - lastToneAt < 450L) return
+        // Intervalo reduzido para 200ms para feedback mais rapido
+        if (now - lastToneAt < 200L) return
 
         lastToneAt = now
-        toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 120)
+        // TONE_PROP_BEEP e mais curto e agudo, ideal para RFID
+        toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
     }
 
     fun clearRecognitionFeedback() {

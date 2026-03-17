@@ -288,6 +288,9 @@ fun GlobalSearchScreen(
                         }
                     }
                     if (targetSignals.isNotEmpty()) {
+                        if (matchFoundInCycle) {
+                            appState?.playDetectionTone()
+                        }
                         targetSignals.forEach { (index, percent) ->
                             val existingTarget = updatedTargets[index]
                             updatedTargets[index] = existingTarget.copy(
@@ -299,13 +302,10 @@ fun GlobalSearchScreen(
                         }
                     }
                     tagTargets = updatedTargets
-                    if (matchFoundInCycle) {
-                        appState?.playDetectionTone()
-                    }
                 }
                 tagTargets = tagTargets.map { target ->
                     val seenAt = target.lastSeenAtMillis ?: return@map target
-                    if (now - seenAt > 1200L) {
+                    if (now - seenAt > 800L) {
                         target.copy(
                             proximityPercent = 0,
                             proximityLabel = if (rfidSearching) "Aguardando" else "Pronto",

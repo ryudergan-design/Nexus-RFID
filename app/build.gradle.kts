@@ -8,20 +8,20 @@ android {
     namespace = "com.example.nexusrfid"
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     experimentalProperties["android.experimental.self-contained-aar-namespaces"] = false
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.nexusrfid"
         minSdk = 23
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
     }
 
     buildTypes {
