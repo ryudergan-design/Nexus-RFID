@@ -224,6 +224,13 @@ fun SettingsScreenPreviewContent(
                             modifier = Modifier.weight(1f),
                             onClick = { onCollectorModelSelected(CollectorModel.R6) }
                         )
+                        CollectorOptionButton(
+                            label = "MC339U",
+                            icon = Icons.Outlined.Devices,
+                            selected = selectedCollectorModel == CollectorModel.MC339U,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onCollectorModelSelected(CollectorModel.MC339U) }
+                        )
                     }
                 }
             }
@@ -282,14 +289,18 @@ fun SettingsScreenPreviewContent(
                 }
             }
 
-            if (r6Ready) {
+            if (selectedCollectorModel != CollectorModel.C72) {
                 item {
                     SettingsSectionCard(
-                        eyebrow = "BLUETOOTH",
+                        eyebrow = if (selectedCollectorModel == CollectorModel.R6) "BLUETOOTH" else "ZEBRA",
                         title = "Leitor ativo"
                     ) {
                         Text(
-                            text = "Toque na caixa abaixo para listar leitores Bluetooth ativos.",
+                            text = if (selectedCollectorModel == CollectorModel.R6) {
+                                "Toque na caixa abaixo para listar leitores Bluetooth ativos."
+                            } else {
+                                "Toque na caixa abaixo para inicializar o servico Zebra."
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary
                         )
@@ -297,9 +308,9 @@ fun SettingsScreenPreviewContent(
                         DevicePickerField(
                             value = connectedDevice?.displayName,
                             placeholder = if (isSearchingDevices) {
-                                "Buscando leitores ativos..."
+                                if (selectedCollectorModel == CollectorModel.R6) "Buscando leitores..." else "Iniciando servico..."
                             } else {
-                                "Buscar leitores ativos"
+                                if (selectedCollectorModel == CollectorModel.R6) "Buscar leitores ativos" else "Abrir servico Zebra"
                             },
                             onClick = ::openDevicePicker
                         )
@@ -315,7 +326,8 @@ fun SettingsScreenPreviewContent(
                                 text = "Desconectar",
                                 onClick = onDisconnect,
                                 borderColor = AppColors.Divider,
-                                containerColor = AppColors.FieldBackground
+                                containerColor = AppColors.CardSurfaceHighlight,
+                                contentColor = AppColors.TopBarOnBlue
                             )
                         }
                     }

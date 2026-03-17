@@ -2,7 +2,8 @@ package com.example.nexusrfid.rfid
 
 enum class CollectorModel(val label: String) {
     C72("C72"),
-    R6("R6")
+    R6("R6"),
+    MC339U("MC339U")
 }
 
 enum class RfidConnectionState {

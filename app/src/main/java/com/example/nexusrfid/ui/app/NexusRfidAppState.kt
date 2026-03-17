@@ -24,12 +24,14 @@ import com.example.nexusrfid.rfid.RfidReader
 import com.example.nexusrfid.rfid.RfidTagRead
 import com.example.nexusrfid.rfid.c72.C72InternalReader
 import com.example.nexusrfid.rfid.r6.R6BluetoothReader
+import com.example.nexusrfid.rfid.zebra.ZebraInternalReader
 
 @Stable
 class NexusRfidAppState internal constructor(
     context: Context,
     private val r6Reader: RfidReader = R6BluetoothReader(context.applicationContext),
-    private val c72Reader: RfidReader = C72InternalReader(context.applicationContext)
+    private val c72Reader: RfidReader = C72InternalReader(context.applicationContext),
+    private val zebraReader: RfidReader = ZebraInternalReader(context.applicationContext)
 ) {
     private val appContext = context.applicationContext
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -40,7 +42,11 @@ class NexusRfidAppState internal constructor(
         private set
 
     private val currentReader: RfidReader
-        get() = if (selectedCollectorModel == CollectorModel.R6) r6Reader else c72Reader
+        get() = when (selectedCollectorModel) {
+            CollectorModel.R6 -> r6Reader
+            CollectorModel.C72 -> c72Reader
+            CollectorModel.MC339U -> zebraReader
+        }
 
     var soundEnabled by mutableStateOf(true)
         private set
@@ -94,6 +100,7 @@ class NexusRfidAppState internal constructor(
         
         r6Reader.setStatusListener(listener)
         c72Reader.setStatusListener(listener)
+        zebraReader.setStatusListener(listener)
     }
 
     private fun handleConnectionStateChange(state: RfidConnectionState, device: RfidDevice?) {
@@ -142,6 +149,7 @@ class NexusRfidAppState internal constructor(
         statusMessage = when (model) {
             CollectorModel.C72 -> "C72 selecionado. Toque em Conectar para abrir o barramento interno."
             CollectorModel.R6 -> "R6 selecionado. Busque o leitor ativo para conectar."
+            CollectorModel.MC339U -> "MC339U selecionado. Toque em Conectar para abrir o servico Zebra."
         }
     }
 
@@ -169,27 +177,40 @@ class NexusRfidAppState internal constructor(
         errorMessage = null
         availableDevices.clear()
         
-        if (selectedCollectorModel != CollectorModel.R6) {
-            // Se for C72, "descobre" o leitor interno instantaneamente
-            val c72Internal = RfidDevice(name = "LEITOR C72", address = "UART")
-            availableDevices.add(c72Internal)
-            statusMessage = "Leitor interno C72 localizado."
-            return
-        }
+        when (selectedCollectorModel) {
+            CollectorModel.C72 -> {
+                val c72Internal = RfidDevice(name = "LEITOR C72", address = "UART")
+                availableDevices.add(c72Internal)
+                statusMessage = "Leitor interno C72 localizado."
+                return
+            }
+            CollectorModel.MC339U -> {
+                statusMessage = "Buscando servicos Zebra..."
+                isDeviceScanRunning = true
+                zebraReader.startScan { device ->
+                    mainHandler.post {
+                        availableDevices.add(device)
+                        isDeviceScanRunning = false
+                    }
+                }
+                return
+            }
+            else -> {
+                isDeviceScanRunning = true
+                if (connectionState != RfidConnectionState.Connected) {
+                    connectionState = RfidConnectionState.Scanning
+                    statusMessage = "Buscando leitores Bluetooth ativos..."
+                }
 
-        isDeviceScanRunning = true
-        if (connectionState != RfidConnectionState.Connected) {
-            connectionState = RfidConnectionState.Scanning
-            statusMessage = "Buscando leitores Bluetooth ativos..."
-        }
-
-        r6Reader.startScan { device ->
-            mainHandler.post {
-                val index = availableDevices.indexOfFirst { it.address == device.address }
-                if (index >= 0) {
-                    availableDevices[index] = device
-                } else {
-                    availableDevices.add(device)
+                r6Reader.startScan { device ->
+                    mainHandler.post {
+                        val index = availableDevices.indexOfFirst { it.address == device.address }
+                        if (index >= 0) {
+                            availableDevices[index] = device
+                        } else {
+                            availableDevices.add(device)
+                        }
+                    }
                 }
             }
         }
@@ -301,6 +322,7 @@ class NexusRfidAppState internal constructor(
         runCatching { stopDeviceScan() }
         runCatching { r6Reader.release() }
         runCatching { c72Reader.release() }
+        runCatching { zebraReader.release() }
         runCatching { toneGenerator.release() }
     }
 

@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.example.nexusrfid"
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
+    experimentalProperties["android.experimental.self-contained-aar-namespaces"] = false
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -45,7 +46,8 @@ android {
 }
 
 dependencies {
-    implementation(files("libs/cw-deviceapi.jar"))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
+    implementation(fileTree(mapOf("dir" to "libs/zebra_jars", "include" to listOf("*.jar"))))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
