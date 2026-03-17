@@ -13,9 +13,12 @@ import androidx.core.content.ContextCompat
 object RfidPermissionGateway {
     fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
+            arrayOf(
+                Manifest.permission.BLUETOOTH_CONNECT,
+                Manifest.permission.BLUETOOTH_SCAN
+            )
         } else {
-            emptyArray()
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 

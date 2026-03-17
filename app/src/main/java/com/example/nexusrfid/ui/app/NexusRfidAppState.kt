@@ -16,9 +16,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.example.nexusrfid.rfid.CollectorModel
+import com.example.nexusrfid.rfid.ReaderRecognitionFeedback
+import com.example.nexusrfid.rfid.ReaderRecognitionState
 import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.rfid.RfidDevice
-import com.example.nexusrfid.rfid.RfidPermissionGateway
 import com.example.nexusrfid.rfid.RfidReader
 import com.example.nexusrfid.rfid.RfidTagRead
 import com.example.nexusrfid.rfid.r6.R6BluetoothReader
@@ -48,6 +49,12 @@ class NexusRfidAppState internal constructor(
     var connectedDevice by mutableStateOf<RfidDevice?>(null)
         private set
 
+    var readerRecognitionState by mutableStateOf(ReaderRecognitionState.Unknown)
+        private set
+
+    var recognitionFeedback by mutableStateOf<ReaderRecognitionFeedback?>(null)
+        private set
+
     var statusMessage by mutableStateOf("Selecione o coletor e conecte o R6 para iniciar.")
         private set
 
@@ -62,13 +69,39 @@ class NexusRfidAppState internal constructor(
     init {
         r6Reader.setStatusListener { state, device ->
             mainHandler.post {
+                val wasConnected = connectionState == RfidConnectionState.Connected
+                if (wasConnected && (state == RfidConnectionState.Scanning || state == RfidConnectionState.Idle)) {
+                    isDeviceScanRunning = state == RfidConnectionState.Scanning
+                    return@post
+                }
                 connectionState = state
                 connectedDevice = device
                 isDeviceScanRunning = state == RfidConnectionState.Scanning
                 statusMessage = state.toStatusMessage(device)
-                if (state == RfidConnectionState.Connected) {
-                    errorMessage = null
-                    r6Reader.setPower(readerPower)
+                when (state) {
+                    RfidConnectionState.Connected -> {
+                        val recognized = r6Reader.setPower(readerPower)
+                        readerRecognitionState = if (recognized) {
+                            ReaderRecognitionState.Recognized
+                        } else {
+                            ReaderRecognitionState.NotRecognized
+                        }
+                        recognitionFeedback = ReaderRecognitionFeedback(
+                            recognized = recognized,
+                            deviceName = device?.displayName
+                        )
+                        errorMessage = if (recognized) {
+                            null
+                        } else {
+                            "Nao foi possivel reconhecer o leitor selecionado."
+                        }
+                    }
+                    RfidConnectionState.Connecting -> {
+                        readerRecognitionState = ReaderRecognitionState.Checking
+                    }
+                    else -> {
+                        readerRecognitionState = ReaderRecognitionState.Unknown
+                    }
                 }
             }
         }
@@ -86,12 +119,14 @@ class NexusRfidAppState internal constructor(
 
         selectedCollectorModel = model
         connectedDevice = null
+        readerRecognitionState = ReaderRecognitionState.Unknown
+        recognitionFeedback = null
         availableDevices.clear()
         connectionState = RfidConnectionState.Idle
         errorMessage = null
         statusMessage = when (model) {
             CollectorModel.C72 -> "C72 selecionado. A conexao fisica entra em uma etapa posterior."
-            CollectorModel.R6 -> "R6 selecionado. Carregue a lista de pareados para conectar."
+            CollectorModel.R6 -> "R6 selecionado. Busque o leitor ativo para conectar."
         }
     }
 
@@ -106,6 +141,10 @@ class NexusRfidAppState internal constructor(
         if (selectedCollectorModel == CollectorModel.R6 &&
             connectionState == RfidConnectionState.Connected
         ) {
+            if (readerRecognitionState != ReaderRecognitionState.Recognized) {
+                errorMessage = "Leitor nao reconhecido. Selecione um leitor valido."
+                return
+            }
             val applied = r6Reader.setPower(clampedPower)
             if (!applied) {
                 errorMessage = "Nao foi possivel aplicar a potencia agora."
@@ -120,29 +159,36 @@ class NexusRfidAppState internal constructor(
         }
 
         errorMessage = null
-        isDeviceScanRunning = true
         availableDevices.clear()
-        statusMessage = "Carregando coletores pareados..."
+        isDeviceScanRunning = true
+        if (connectionState != RfidConnectionState.Connected) {
+            connectionState = RfidConnectionState.Scanning
+            statusMessage = "Buscando leitores ativos..."
+        }
 
-        mainHandler.post {
-            val devices = RfidPermissionGateway.bondedDevices(appContext)
-            availableDevices.addAll(devices)
-            isDeviceScanRunning = false
-            if (connectionState != RfidConnectionState.Connected) {
-                connectionState = RfidConnectionState.Idle
-            }
-            statusMessage = when {
-                devices.isEmpty() -> "Nenhum coletor pareado encontrado. Pareie o R6 nas configuracoes do Android."
-                devices.size == 1 -> "1 coletor pareado pronto para conectar."
-                else -> "${devices.size} coletores pareados prontos para conectar."
+        r6Reader.startScan { device ->
+            mainHandler.post {
+                val index = availableDevices.indexOfFirst { it.address == device.address }
+                if (index >= 0) {
+                    availableDevices[index] = device
+                } else {
+                    availableDevices.add(device)
+                }
             }
         }
     }
 
     fun stopDeviceScan() {
+        r6Reader.stopScan()
         isDeviceScanRunning = false
         if (connectionState == RfidConnectionState.Scanning) {
             connectionState = RfidConnectionState.Idle
+            statusMessage = when {
+                availableDevices.isEmpty() ->
+                    "Nenhum leitor ativo encontrado. Ligue o leitor e tente novamente."
+                availableDevices.size == 1 -> "1 leitor ativo pronto para conectar."
+                else -> "${availableDevices.size} leitores ativos prontos para conectar."
+            }
         }
     }
 
@@ -154,6 +200,11 @@ class NexusRfidAppState internal constructor(
 
         errorMessage = null
         stopDeviceScan()
+        if (connectedDevice?.address != null && connectedDevice?.address != device.address) {
+            r6Reader.disconnect()
+        }
+        readerRecognitionState = ReaderRecognitionState.Checking
+        recognitionFeedback = null
         statusMessage = "Conectando em ${device.displayName}..."
         r6Reader.connect(device.address)
     }
@@ -164,7 +215,9 @@ class NexusRfidAppState internal constructor(
         r6Reader.disconnect()
         connectedDevice = null
         connectionState = RfidConnectionState.Disconnected
-        statusMessage = "Coletor desconectado. Abra a lista de pareados para reconectar."
+        readerRecognitionState = ReaderRecognitionState.Unknown
+        recognitionFeedback = null
+        statusMessage = "Coletor desconectado. Abra a lista de leitores ativos para reconectar."
     }
 
     fun startInventory(): Boolean {
@@ -175,6 +228,11 @@ class NexusRfidAppState internal constructor(
 
         if (connectionState != RfidConnectionState.Connected) {
             errorMessage = "Conecte o R6 antes de iniciar a busca."
+            return false
+        }
+
+        if (readerRecognitionState != ReaderRecognitionState.Recognized) {
+            errorMessage = "Leitor nao reconhecido. Selecione um leitor valido."
             return false
         }
 
@@ -199,7 +257,8 @@ class NexusRfidAppState internal constructor(
 
     fun readTagBatch(): List<RfidTagRead> {
         return if (selectedCollectorModel == CollectorModel.R6 &&
-            connectionState == RfidConnectionState.Connected
+            connectionState == RfidConnectionState.Connected &&
+            readerRecognitionState == ReaderRecognitionState.Recognized
         ) {
             r6Reader.readAvailableTags()
         } else {
@@ -215,6 +274,10 @@ class NexusRfidAppState internal constructor(
 
         lastToneAt = now
         toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 120)
+    }
+
+    fun clearRecognitionFeedback() {
+        recognitionFeedback = null
     }
 
     fun clearErrorMessage() {
@@ -235,7 +298,7 @@ class NexusRfidAppState internal constructor(
     private fun RfidConnectionState.toStatusMessage(device: RfidDevice?): String {
         return when (this) {
             RfidConnectionState.Idle -> "Selecione o coletor e conecte o R6 para iniciar."
-            RfidConnectionState.Scanning -> "Carregando coletores pareados..."
+            RfidConnectionState.Scanning -> "Buscando leitores ativos..."
             RfidConnectionState.Connecting -> "Conectando em ${device?.displayName ?: "R6"}..."
             RfidConnectionState.Connected -> "${device?.displayName ?: "R6"} conectado."
             RfidConnectionState.Disconnected -> "Coletor desconectado."

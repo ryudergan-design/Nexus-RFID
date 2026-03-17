@@ -63,6 +63,8 @@ import com.example.nexusrfid.data.mock.SearchCounterSummary
 import com.example.nexusrfid.data.mock.SearchTargetItem
 import com.example.nexusrfid.data.mock.SearchTypeOption
 import com.example.nexusrfid.rfid.CollectorModel
+import com.example.nexusrfid.rfid.ReaderRecognitionState
+import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.ui.app.NexusRfidAppState
 import com.example.nexusrfid.ui.components.ActionButtonOutline
 import com.example.nexusrfid.ui.components.ActionButtonPrimary
@@ -156,6 +158,10 @@ fun GlobalSearchScreen(
     val counterFoundCount = if (isTagMode) foundCount else searchSummary.foundCount
     val leadingTarget = tagTargets.maxByOrNull { it.proximityPercent }
     val soundEnabled = appState?.soundEnabled ?: true
+    val readerReady = appState?.let { state ->
+        state.connectionState == RfidConnectionState.Connected &&
+            state.readerRecognitionState == ReaderRecognitionState.Recognized
+    } ?: false
 
     fun stopRfidSearch(resetFeedback: Boolean) {
         searchJob?.cancel()
@@ -333,6 +339,7 @@ fun GlobalSearchScreen(
             refreshFoundCount()
         },
         soundEnabled = soundEnabled,
+        readerReady = readerReady,
         onToggleSound = {
             appState?.let { state -> state.updateSoundEnabled(!state.soundEnabled) }
         },
@@ -917,6 +924,7 @@ private fun SearchResultsCard(
 private fun LegacyActionRow(
     readingActive: Boolean,
     soundEnabled: Boolean,
+    readerEnabled: Boolean,
     onStart: () -> Unit,
     onStop: () -> Unit,
     onPowerClick: () -> Unit,
@@ -932,18 +940,22 @@ private fun LegacyActionRow(
             icon = Icons.Outlined.PlayArrow,
             onClick = onStart,
             active = readingActive,
+            enabled = readerEnabled,
             modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
             label = "Parar",
             icon = Icons.Outlined.Stop,
             onClick = onStop,
+            enabled = readerEnabled,
             modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
             label = "Potencia",
             icon = Icons.Outlined.Wifi,
             onClick = onPowerClick,
+            active = readerEnabled,
+            enabled = readerEnabled,
             modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
@@ -962,12 +974,19 @@ private fun LegacyActionButton(
     icon: ImageVector,
     onClick: () -> Unit,
     active: Boolean = false,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (active) AppColors.TopBarBlue else AppColors.TextSecondary
+    val disabledColor = AppColors.TextSecondary.copy(alpha = 0.4f)
+    val tint = when {
+        !enabled -> disabledColor
+        active -> AppColors.TopBarBlue
+        else -> AppColors.TextSecondary
+    }
+    val textColor = if (enabled) AppColors.TextSecondary else disabledColor
     Column(
         modifier = modifier
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = AppSpacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
@@ -981,7 +1000,7 @@ private fun LegacyActionButton(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = AppColors.TextSecondary
+            color = textColor
         )
     }
 }
@@ -1262,6 +1281,7 @@ private fun GlobalSearchContent(
     onClearTags: () -> Unit,
     onRemoveTag: (String) -> Unit,
     soundEnabled: Boolean,
+    readerReady: Boolean,
     onToggleSound: () -> Unit,
     onDecreasePower: () -> Unit,
     onIncreasePower: () -> Unit,
@@ -1341,9 +1361,14 @@ private fun GlobalSearchContent(
                         LegacyActionRow(
                             readingActive = readingActive,
                             soundEnabled = soundEnabled,
+                            readerEnabled = readerReady,
                             onStart = onStartSearch,
                             onStop = onStopSearch,
-                            onPowerClick = { showPowerDialog = true },
+                            onPowerClick = {
+                                if (readerReady) {
+                                    showPowerDialog = true
+                                }
+                            },
                             onSoundClick = onToggleSound
                         )
                     }

@@ -14,6 +14,13 @@ enum class RfidConnectionState {
     Error
 }
 
+enum class ReaderRecognitionState {
+    Unknown,
+    Checking,
+    Recognized,
+    NotRecognized
+}
+
 data class RfidDevice(
     val name: String,
     val address: String,
@@ -32,4 +39,9 @@ data class RfidTagRead(
     val rssi: Int? = null,
     val tid: String? = null,
     val seenAtMillis: Long = System.currentTimeMillis()
+)
+
+data class ReaderRecognitionFeedback(
+    val recognized: Boolean,
+    val deviceName: String? = null
 )

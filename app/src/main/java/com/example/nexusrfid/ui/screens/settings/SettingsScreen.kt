@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,9 +13,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BluetoothConnected
 import androidx.compose.material.icons.outlined.Devices
@@ -22,7 +25,7 @@ import androidx.compose.material.icons.outlined.LinkOff
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsOff
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +37,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,8 +48,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.rfid.CollectorModel
+import com.example.nexusrfid.rfid.ReaderRecognitionFeedback
 import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.rfid.RfidDevice
 import com.example.nexusrfid.rfid.RfidPermissionGateway
@@ -69,7 +78,7 @@ fun SettingsScreen(
         if (RfidPermissionGateway.isBluetoothEnabled(context)) {
             appState.startR6Discovery()
         } else {
-            appState.reportError("Ative o Bluetooth para carregar os coletores pareados.")
+            appState.reportError("Ative o Bluetooth para buscar leitores ativos.")
         }
     }
 
@@ -83,7 +92,7 @@ fun SettingsScreen(
                 enableBluetoothLauncher.launch(RfidPermissionGateway.bluetoothEnableIntent())
             }
         } else {
-            appState.reportError("Permita o Bluetooth para acessar os coletores pareados.")
+            appState.reportError("Permita Bluetooth e localizacao para buscar leitores ativos.")
         }
     }
 
@@ -109,6 +118,7 @@ fun SettingsScreen(
         soundEnabled = appState.soundEnabled,
         isSearchingDevices = appState.isDeviceScanRunning,
         availableDevices = appState.availableDevices,
+        recognitionFeedback = appState.recognitionFeedback,
         errorMessage = appState.errorMessage,
         onCollectorModelSelected = appState::selectCollectorModel,
         onSoundChange = appState::updateSoundEnabled,
@@ -116,6 +126,7 @@ fun SettingsScreen(
         onStopDeviceScan = appState::stopDeviceScan,
         onConnectDevice = appState::connectToR6,
         onDisconnect = appState::disconnectReader,
+        onDismissRecognition = appState::clearRecognitionFeedback,
         onDismissError = appState::clearErrorMessage,
         modifier = modifier
     )
@@ -131,6 +142,7 @@ fun SettingsScreenPreviewContent(
     soundEnabled: Boolean,
     isSearchingDevices: Boolean,
     availableDevices: List<RfidDevice>,
+    recognitionFeedback: ReaderRecognitionFeedback?,
     errorMessage: String?,
     onCollectorModelSelected: (CollectorModel) -> Unit,
     onSoundChange: (Boolean) -> Unit,
@@ -138,14 +150,27 @@ fun SettingsScreenPreviewContent(
     onStopDeviceScan: () -> Unit,
     onConnectDevice: (RfidDevice) -> Unit,
     onDisconnect: () -> Unit,
+    onDismissRecognition: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val r6Ready = selectedCollectorModel == CollectorModel.R6
-    val actionLabel = when {
-        isSearchingDevices -> "Carregando lista"
-        availableDevices.isEmpty() -> "Mostrar pareados"
-        else -> "Atualizar lista"
+    var showDevicePicker by remember { mutableStateOf(false) }
+    val deviceAvailabilityMessage = when {
+        isSearchingDevices -> "Buscando leitores ativos..."
+        availableDevices.isEmpty() -> "Nenhum leitor ativo encontrado."
+        availableDevices.size == 1 -> "1 leitor ativo encontrado."
+        else -> "${availableDevices.size} leitores ativos encontrados."
+    }
+
+    fun openDevicePicker() {
+        onStartR6Flow()
+        showDevicePicker = true
+    }
+
+    fun closeDevicePicker() {
+        showDevicePicker = false
+        onStopDeviceScan()
     }
 
     Scaffold(
@@ -261,70 +286,41 @@ fun SettingsScreenPreviewContent(
                 item {
                     SettingsSectionCard(
                         eyebrow = "BLUETOOTH",
-                        title = "Coletores pareados"
+                        title = "Leitor ativo"
                     ) {
                         Text(
-                            text = "O app lista somente dispositivos ja pareados no Android. Assim a escolha fica mais segura e direta.",
+                            text = "Toque na caixa abaixo para listar leitores Bluetooth ativos.",
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary
                         )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                        ) {
-                            ActionButtonPrimary(
-                                text = actionLabel,
-                                onClick = if (isSearchingDevices) onStopDeviceScan else onStartR6Flow,
-                                modifier = Modifier.weight(1f),
-                                enabled = !isSearchingDevices
-                            )
+                        DevicePickerField(
+                            value = connectedDevice?.displayName,
+                            placeholder = if (isSearchingDevices) {
+                                "Buscando leitores ativos..."
+                            } else {
+                                "Buscar leitores ativos"
+                            },
+                            onClick = ::openDevicePicker
+                        )
 
-                            if (connectionState == RfidConnectionState.Connected) {
-                                ActionButtonOutline(
-                                    text = "Desconectar",
-                                    onClick = onDisconnect,
-                                    modifier = Modifier.weight(1f),
-                                    borderColor = AppColors.Divider,
-                                    containerColor = AppColors.FieldBackground
-                                )
-                            }
+                        Text(
+                            text = deviceAvailabilityMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextSecondary
+                        )
+
+                        if (connectionState == RfidConnectionState.Connected) {
+                            ActionButtonOutline(
+                                text = "Desconectar",
+                                onClick = onDisconnect,
+                                borderColor = AppColors.Divider,
+                                containerColor = AppColors.FieldBackground
+                            )
                         }
                     }
                 }
 
-                item {
-                    if (availableDevices.isEmpty()) {
-                        SettingsSectionCard(
-                            eyebrow = "AGUARDANDO",
-                            title = "Nenhum coletor pronto"
-                        ) {
-                            Text(
-                                text = "Pareie o R6 nas configuracoes do Android e volte aqui para conectar.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextSecondary
-                            )
-                        }
-                    } else {
-                        SettingsSectionCard(
-                            eyebrow = "${availableDevices.size} PAREADO(S)",
-                            title = "Lista de conexao"
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                            ) {
-                                availableDevices.forEach { device ->
-                                    DeviceRow(
-                                        device = device,
-                                        connected = connectedDevice?.address == device.address,
-                                        onConnect = { onConnectDevice(device) }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             } else {
                 item {
                     SettingsSectionCard(
@@ -349,6 +345,26 @@ fun SettingsScreenPreviewContent(
                 }
             }
         }
+    }
+
+    if (showDevicePicker) {
+        DevicePickerDialog(
+            devices = availableDevices,
+            isSearching = isSearchingDevices,
+            selectedDevice = connectedDevice,
+            onSelect = { device ->
+                onConnectDevice(device)
+                closeDevicePicker()
+            },
+            onDismiss = ::closeDevicePicker
+        )
+    }
+
+    recognitionFeedback?.let { feedback ->
+        ReaderRecognitionDialog(
+            recognized = feedback.recognized,
+            onDismiss = onDismissRecognition
+        )
     }
 }
 
@@ -520,19 +536,134 @@ private fun CollectorOptionButton(
 }
 
 @Composable
+private fun DevicePickerField(
+    value: String?,
+    placeholder: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val displayText = value?.takeIf { it.isNotBlank() } ?: placeholder
+    val textColor = if (value.isNullOrBlank()) AppColors.TextSecondary else AppColors.TextPrimary
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(1.dp, AppColors.Divider, AppShapes.input)
+            .background(AppColors.FieldBackground, AppShapes.input)
+            .clickable(onClick = onClick)
+            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.BluetoothConnected,
+            contentDescription = null,
+            tint = AppColors.TopBarBlue
+        )
+        Text(
+            text = displayText,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor
+        )
+        Icon(
+            imageVector = Icons.Outlined.Search,
+            contentDescription = null,
+            tint = AppColors.TextSecondary
+        )
+    }
+}
+
+@Composable
+private fun DevicePickerDialog(
+    devices: List<RfidDevice>,
+    isSearching: Boolean,
+    selectedDevice: RfidDevice?,
+    onSelect: (RfidDevice) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+            border = BorderStroke(1.dp, AppColors.Divider),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Text(
+                    text = "Leitores Bluetooth",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = AppColors.TextPrimary
+                )
+                Text(
+                    text = if (isSearching) {
+                        "Buscando leitores ativos..."
+                    } else {
+                        "Selecione um leitor ativo para conectar."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+
+                if (devices.isEmpty()) {
+                    Text(
+                        text = if (isSearching) {
+                            "Aguarde a busca concluir."
+                        } else {
+                            "Nenhum leitor ativo encontrado."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TextSecondary
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 280.dp),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                    ) {
+                        items(devices, key = { it.address }) { device ->
+                            DeviceRow(
+                                device = device,
+                                selected = selectedDevice?.address == device.address,
+                                onSelect = { onSelect(device) }
+                            )
+                        }
+                    }
+                }
+
+                ActionButtonOutline(
+                    text = "Fechar",
+                    onClick = onDismiss,
+                    borderColor = AppColors.Divider,
+                    containerColor = AppColors.FieldBackground
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun DeviceRow(
     device: RfidDevice,
-    connected: Boolean,
-    onConnect: () -> Unit
+    selected: Boolean,
+    onSelect: () -> Unit
 ) {
+    val borderColor = if (selected) AppColors.PositiveBorder else AppColors.Divider
+    val backgroundColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, AppColors.Divider, AppShapes.card)
-            .background(
-                if (connected) AppColors.AccentSurface else AppColors.FieldBackground,
-                AppShapes.card
-            )
+            .border(1.dp, borderColor, AppShapes.card)
+            .background(backgroundColor, AppShapes.card)
+            .clickable(enabled = !selected, onClick = onSelect)
             .padding(AppSpacing.md),
         horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
         verticalAlignment = Alignment.CenterVertically
@@ -564,39 +695,20 @@ private fun DeviceRow(
                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                 color = AppColors.TextSecondary
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-            ) {
-                StatusPill(
-                    text = "Pareado",
-                    background = AppColors.TopBarBlue.copy(alpha = 0.08f),
-                    contentColor = AppColors.TopBarBlue
-                )
-                if (connected) {
-                    StatusPill(
-                        text = "Conectado",
-                        background = AppColors.PositiveGreen.copy(alpha = 0.14f),
-                        contentColor = AppColors.PositiveGreen
-                    )
-                }
-            }
         }
 
-        Button(
-            onClick = onConnect,
-            enabled = !connected,
-            shape = AppShapes.button,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.PrimaryActionBlue,
-                contentColor = AppColors.TopBarOnBlue
-            ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 0.dp,
-                pressedElevation = 0.dp,
-                disabledElevation = 0.dp
+        if (selected) {
+            StatusPill(
+                text = "Selecionado",
+                background = AppColors.PositiveGreen.copy(alpha = 0.16f),
+                contentColor = AppColors.PositiveGreen
             )
-        ) {
-            Text(if (connected) "Ativo" else "Conectar")
+        } else {
+            Text(
+                text = "Selecionar",
+                style = MaterialTheme.typography.labelLarge,
+                color = AppColors.TopBarBlue
+            )
         }
     }
 }
@@ -617,6 +729,56 @@ private fun StatusPill(
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
             color = contentColor
         )
+    }
+}
+
+@Composable
+private fun ReaderRecognitionDialog(
+    recognized: Boolean,
+    onDismiss: () -> Unit
+) {
+    val titleText = if (recognized) "Leitor Reconhecido" else "Nao Reconhecido"
+    val titleColor = if (recognized) {
+        AppColors.PositiveGreen
+    } else {
+        androidx.compose.ui.graphics.Color(0xFFD06A6A)
+    }
+    val supportingText = if (recognized) {
+        "O leitor esta pronto para uso."
+    } else {
+        "O dispositivo nao respondeu como leitor RFID."
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+            border = BorderStroke(1.dp, AppColors.Divider),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Text(
+                    text = titleText,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = titleColor
+                )
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+                ActionButtonPrimary(
+                    text = "Fechar",
+                    onClick = onDismiss
+                )
+            }
+        }
     }
 }
 
@@ -682,6 +844,7 @@ private fun SettingsScreenPreview() {
             soundEnabled = MockDataSource.settingsPreviewState.soundEnabled,
             isSearchingDevices = MockDataSource.settingsPreviewState.isSearchingDevices,
             availableDevices = MockDataSource.r6PreviewDevices,
+            recognitionFeedback = null,
             errorMessage = null,
             onCollectorModelSelected = {},
             onSoundChange = {},
@@ -689,6 +852,7 @@ private fun SettingsScreenPreview() {
             onStopDeviceScan = {},
             onConnectDevice = {},
             onDisconnect = {},
+            onDismissRecognition = {},
             onDismissError = {}
         )
     }
