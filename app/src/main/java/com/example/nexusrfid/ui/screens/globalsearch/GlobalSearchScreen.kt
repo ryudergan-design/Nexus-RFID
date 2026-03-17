@@ -300,10 +300,6 @@ fun GlobalSearchScreen(
             dialogErrorMessage = "Adicione pelo menos uma tag para iniciar."
             return
         }
-        if (appState?.selectedCollectorModel == CollectorModel.C72) {
-            dialogErrorMessage = "O primeiro teste real desta fase esta habilitado apenas para o R6."
-            return
-        }
         if (appState != null && !appState.startInventory()) {
             return
         }

@@ -42,7 +42,7 @@ fun AppDialog(
         Card(
             modifier = modifier.fillMaxWidth(),
             shape = AppShapes.modal,
-            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
             border = BorderStroke(1.dp, AppColors.Divider),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
@@ -90,10 +90,10 @@ fun AppDialog(
                         keyboardType = if (numericInput) KeyboardType.Number else KeyboardType.Text
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = AppColors.CardSurface,
-                        unfocusedContainerColor = AppColors.CardSurface,
-                        disabledContainerColor = AppColors.CardSurface,
-                        errorContainerColor = AppColors.CardSurface,
+                        focusedContainerColor = AppColors.CardSurfaceHighlight,
+                        unfocusedContainerColor = AppColors.CardSurfaceHighlight,
+                        disabledContainerColor = AppColors.CardSurfaceHighlight,
+                        errorContainerColor = AppColors.CardSurfaceHighlight,
                         focusedBorderColor = AppColors.Divider,
                         unfocusedBorderColor = AppColors.Divider,
                         cursorColor = AppColors.PrimaryActionBlue,
