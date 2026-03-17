@@ -21,3 +21,6 @@ local.properties
 *.apk
 Nexus Service Desk/
 .codex/
+
+/g/
+*.apk
