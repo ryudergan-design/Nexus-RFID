@@ -2,6 +2,7 @@ package com.example.nexusrfid.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,7 +29,8 @@ import com.example.nexusrfid.ui.theme.AppSpacing
 fun CounterBar(
     readCount: Int,
     foundCount: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onReadClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -40,6 +42,7 @@ fun CounterBar(
             backgroundColor = AppColors.PrimaryActionBlue.copy(alpha = 0.14f),
             borderColor = AppColors.BrandSignalBlue.copy(alpha = 0.44f),
             contentColor = AppColors.BrandSignalBlue,
+            onClick = onReadClick,
             modifier = Modifier.weight(1f)
         )
 
@@ -61,10 +64,16 @@ private fun CounterItem(
     backgroundColor: Color,
     borderColor: Color,
     contentColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
+    val clickableModifier = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
     Column(
-        modifier = modifier,
+        modifier = modifier.then(clickableModifier),
         verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
     ) {
         Row(

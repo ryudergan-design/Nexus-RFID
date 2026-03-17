@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BluetoothConnected
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Search
@@ -33,6 +35,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -41,6 +44,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.data.mock.ProductListItem
 import com.example.nexusrfid.data.mock.ProductTargetState
@@ -119,6 +124,7 @@ fun GlobalSearchScreen(
     var selectedType by remember(initialSelectedTypeKey) { mutableStateOf(initialType) }
     var selectedTargetKey by remember(initialSelectedTargetKey) { mutableStateOf(initialSelectedTargetKey) }
     var showTypeSheet by remember(initialSheetOpen) { mutableStateOf(initialSheetOpen) }
+    var showReadTagsDialog by remember { mutableStateOf(false) }
     var dialogOption by remember(initialDialogTypeKey) {
         mutableStateOf(searchTypes.firstOrNull { it.key == initialDialogTypeKey })
     }
@@ -131,6 +137,7 @@ fun GlobalSearchScreen(
     var tagTargets by remember(initialTagTargets) {
         mutableStateOf(initialTagTargets.map { it.toUiModel() })
     }
+    val readTagRegistry = remember { mutableStateMapOf<String, ReadTagItemUi>() }
 
     val defaultTargetKey = searchTargets.first().key
     val selectedTarget = searchTargets.firstOrNull { it.key == selectedTargetKey } ?: searchTargets.first()
@@ -147,7 +154,7 @@ fun GlobalSearchScreen(
 
     val matchedProducts = tagTargets
         .mapNotNull { target ->
-            products.firstOrNull { it.tagCode.normalizedTag() == target.epc }
+            products.firstOrNull { tagsMatch(it.tagCode, target.epc) }
         }
         .distinctBy { it.code }
         .filter { product ->
@@ -181,6 +188,7 @@ fun GlobalSearchScreen(
             }
             readCount = 0
             foundCount = 0
+            readTagRegistry.clear()
         }
     }
 
@@ -216,14 +224,15 @@ fun GlobalSearchScreen(
         tagTargets = emptyList()
         dialogValue = ""
         dialogErrorMessage = null
+        readTagRegistry.clear()
         appState?.clearErrorMessage()
     }
 
     fun addTagTarget(rawValue: String) {
         val normalizedTag = rawValue.normalizedTag()
         when {
-            normalizedTag.length != 24 -> dialogErrorMessage = "A tag precisa ter 24 caracteres."
-            tagTargets.any { it.epc == normalizedTag } -> dialogErrorMessage = "Essa tag ja foi adicionada."
+            !isValidTagLength(normalizedTag) -> dialogErrorMessage = "A tag precisa ter 20 ou 24 caracteres."
+            tagTargets.any { tagsMatch(it.epc, normalizedTag) } -> dialogErrorMessage = "Essa tag ja foi adicionada."
             else -> {
                 tagTargets = tagTargets + TagTargetItemUi(
                     epc = normalizedTag,
@@ -250,23 +259,32 @@ fun GlobalSearchScreen(
                 if (batch.isNotEmpty()) {
                     readCount += batch.size
                     var matchFoundInCycle = false
-                    val updatedTargets = tagTargets.associateBy { it.epc }.toMutableMap()
+                    val updatedTargets = tagTargets.toMutableList()
                     batch.forEach { tagRead ->
                         val normalizedEpc = tagRead.epc.normalizedTag()
-                        val existingTarget = updatedTargets[normalizedEpc] ?: return@forEach
                         val percent = rssiToPercent(tagRead.rssi)
-                        val matchedProduct = products.firstOrNull { it.tagCode.normalizedTag() == normalizedEpc }
+                        val matchedProduct = products.firstOrNull { tagsMatch(it.tagCode, normalizedEpc) }
+                        readTagRegistry[normalizedEpc] = ReadTagItemUi(
+                            epc = normalizedEpc,
+                            matchedProductName = matchedProduct?.name,
+                            lastSeenAtMillis = now,
+                            rssiPercent = percent
+                        )
                         if (percent > 0) {
-                            matchFoundInCycle = true
-                            updatedTargets[normalizedEpc] = existingTarget.copy(
-                                proximityPercent = maxOf(existingTarget.proximityPercent, percent),
-                                proximityLabel = proximityLabelFor(percent),
-                                matchedProductName = matchedProduct?.name ?: existingTarget.matchedProductName,
-                                lastSeenAtMillis = now
-                            )
+                            val matchedIndex = updatedTargets.indexOfFirst { tagsMatch(it.epc, normalizedEpc) }
+                            if (matchedIndex >= 0) {
+                                val existingTarget = updatedTargets[matchedIndex]
+                                matchFoundInCycle = true
+                                updatedTargets[matchedIndex] = existingTarget.copy(
+                                    proximityPercent = maxOf(existingTarget.proximityPercent, percent),
+                                    proximityLabel = proximityLabelFor(percent),
+                                    matchedProductName = matchedProduct?.name ?: existingTarget.matchedProductName,
+                                    lastSeenAtMillis = now
+                                )
+                            }
                         }
                     }
-                    tagTargets = tagTargets.map { updatedTargets[it.epc] ?: it }
+                    tagTargets = updatedTargets
                     if (matchFoundInCycle) {
                         appState?.playDetectionTone()
                     }
@@ -311,6 +329,9 @@ fun GlobalSearchScreen(
     DisposableEffect(Unit) {
         onDispose { stopRfidSearch(resetFeedback = false) }
     }
+
+    val readTargets = readTagRegistry.values
+        .sortedWith(compareByDescending<ReadTagItemUi> { it.lastSeenAtMillis }.thenBy { it.epc })
 
     GlobalSearchContent(
         products = products,
@@ -366,6 +387,11 @@ fun GlobalSearchScreen(
         tagTargets = tagTargets,
         leadingTarget = leadingTarget,
         errorMessage = appState?.errorMessage ?: dialogErrorMessage,
+        onReadCountClick = if (isTagMode && readTargets.isNotEmpty()) {
+            { showReadTagsDialog = true }
+        } else {
+            null
+        },
         modifier = modifier
     )
 
@@ -398,9 +424,16 @@ fun GlobalSearchScreen(
                 }
             },
             confirmEnabled = when (option.key) {
-                TagSearchTypeKey -> dialogValue.normalizedTag().length == 24
+                TagSearchTypeKey -> isValidTagLength(dialogValue.normalizedTag())
                 else -> dialogValue.isNotBlank()
             }
+        )
+    }
+
+    if (showReadTagsDialog) {
+        ReadTagsDialog(
+            items = readTargets,
+            onDismiss = { showReadTagsDialog = false }
         )
     }
 }
@@ -572,7 +605,7 @@ private fun TagCommandCard(
                     )
                 }
                 Text(
-                    text = "EPC 24",
+                    text = "EPC 20/24",
                     style = MaterialTheme.typography.labelLarge,
                     color = AppColors.TopBarBlue
                 )
@@ -1011,6 +1044,7 @@ private fun LegacyTargetsCard(
     tagCount: Int,
     onAddTarget: () -> Unit,
     onClearTargets: () -> Unit,
+    onReadCountClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val message = if (tagCount == 0) {
@@ -1034,7 +1068,8 @@ private fun LegacyTargetsCard(
         ) {
             CounterBar(
                 readCount = readCount,
-                foundCount = foundCount
+                foundCount = foundCount,
+                onReadClick = onReadCountClick
             )
             Text(
                 text = message,
@@ -1094,13 +1129,122 @@ private fun LegacyTargetButton(
 }
 
 @Composable
+private fun ReadTagsDialog(
+    items: List<ReadTagItemUi>,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
+            border = BorderStroke(1.dp, AppColors.BrandSignalBlue.copy(alpha = 0.44f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                        Text(
+                            text = "PECAS LIDAS",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AppColors.BrandSignalBlue
+                        )
+                        Text(
+                            text = "${items.size} item(s) lido(s)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextSecondary
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = "Fechar",
+                            tint = AppColors.TextSecondary
+                        )
+                    }
+                }
+
+                if (items.isEmpty()) {
+                    Text(
+                        text = "Nenhuma tag lida ainda.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TextSecondary
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(280.dp),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                    ) {
+                        items(items, key = { it.epc }) { item ->
+                            ReadTagRow(item = item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReadTagRow(
+    item: ReadTagItemUi
+) {
+    val title = item.matchedProductName ?: "Tag ${item.epc.takeLast(8)}"
+    val status = if (item.rssiPercent > 0) proximityLabelFor(item.rssiPercent) else "Lida"
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(0.5.dp, AppColors.Divider, AppShapes.card)
+            .background(AppColors.CardSurfaceHighlight, AppShapes.card)
+            .padding(AppSpacing.md),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                color = AppColors.TopBarOnBlue,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = item.epc,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                color = AppColors.TextSecondary
+            )
+        }
+        Text(
+            text = status,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+            color = AppColors.BrandSignalBlue
+        )
+    }
+}
+
+@Composable
 private fun PowerDialog(
     powerLevel: Int,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+    Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = AppShapes.modal,
@@ -1172,6 +1316,13 @@ private fun matchesSearchType(
     return source.any { it.normalizeForSearch().contains(normalizedValue) }
 }
 
+private data class ReadTagItemUi(
+    val epc: String,
+    val matchedProductName: String? = null,
+    val lastSeenAtMillis: Long,
+    val rssiPercent: Int
+)
+
 private fun targetStateLabel(state: ProductTargetState): String {
     return when (state) {
         ProductTargetState.Pending -> "Pendente"
@@ -1186,6 +1337,31 @@ private fun String.normalizeForSearch(): String {
 
 private fun String.normalizedTag(): String {
     return uppercase().replace(" ", "").replace("-", "").replace(".", "")
+}
+
+private fun isValidTagLength(value: String): Boolean {
+    return value.length == 20 || value.length == 24
+}
+
+private fun tagVariants(value: String): Set<String> {
+    val normalized = value.normalizedTag()
+    val variants = mutableSetOf(normalized)
+    if (normalized.length == 20) {
+        variants.add(normalized.padStart(24, '0'))
+    } else if (normalized.length == 24) {
+        val trimmed = normalized.trimStart('0')
+        if (trimmed.length == 20) {
+            variants.add(trimmed)
+        }
+    }
+    return variants
+}
+
+private fun tagsMatch(left: String, right: String): Boolean {
+    if (left.isBlank() || right.isBlank()) return false
+    val leftVariants = tagVariants(left)
+    val rightVariants = tagVariants(right)
+    return leftVariants.any { it in rightVariants }
 }
 
 private fun rssiToPercent(rssi: Int?): Int {
@@ -1299,6 +1475,7 @@ private fun GlobalSearchContent(
     tagTargets: List<TagTargetItemUi>,
     leadingTarget: TagTargetItemUi?,
     errorMessage: String?,
+    onReadCountClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
     val proximityTitle = if (leadingTarget != null && leadingTarget.proximityPercent > 0) {
@@ -1376,7 +1553,8 @@ private fun GlobalSearchContent(
                             foundCount = foundCount,
                             tagCount = tagCount,
                             onAddTarget = onAddTag,
-                            onClearTargets = onClearTags
+                            onClearTargets = onClearTags,
+                            onReadCountClick = onReadCountClick
                         )
                     }
 
@@ -1448,7 +1626,8 @@ private fun GlobalSearchContent(
                     item {
                         CounterBar(
                             readCount = readCount,
-                            foundCount = foundCount
+                            foundCount = foundCount,
+                            onReadClick = onReadCountClick
                         )
                     }
 
