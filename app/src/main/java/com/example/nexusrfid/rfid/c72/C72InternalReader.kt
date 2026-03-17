@@ -36,16 +36,19 @@ class C72InternalReader(
     }
 
     override fun connect(address: String) {
-        statusListener?.invoke(RfidConnectionState.Connecting, RfidDevice("C72", "UART"))
-        
-        val success = runCatching {
-            reader?.init() ?: false
-        }.getOrDefault(false)
+        val device = RfidDevice("C72", "UART")
+        statusListener?.invoke(RfidConnectionState.Connecting, device)
+
+        if (reader == null) {
+            runCatching { reader = RFIDWithUHFUART.getInstance() }
+        }
+
+        val success = runCatching { reader?.init() ?: false }.getOrDefault(false)
 
         if (success) {
-            statusListener?.invoke(RfidConnectionState.Connected, RfidDevice("C72", "UART"))
+            statusListener?.invoke(RfidConnectionState.Connected, device)
         } else {
-            statusListener?.invoke(RfidConnectionState.Error, null)
+            statusListener?.invoke(RfidConnectionState.Error, device)
         }
     }
 

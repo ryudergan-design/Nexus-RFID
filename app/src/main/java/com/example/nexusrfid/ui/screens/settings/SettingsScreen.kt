@@ -26,12 +26,10 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -44,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -125,6 +124,7 @@ fun SettingsScreen(
         onStartR6Flow = ::startR6Flow,
         onStopDeviceScan = appState::stopDeviceScan,
         onConnectDevice = appState::connectToR6,
+        onConnectInternalCollector = appState::connectInternalCollector,
         onDisconnect = appState::disconnectReader,
         onDismissRecognition = appState::clearRecognitionFeedback,
         onDismissError = appState::clearErrorMessage,
@@ -149,12 +149,15 @@ fun SettingsScreenPreviewContent(
     onStartR6Flow: () -> Unit,
     onStopDeviceScan: () -> Unit,
     onConnectDevice: (RfidDevice) -> Unit,
+    onConnectInternalCollector: () -> Unit,
     onDisconnect: () -> Unit,
     onDismissRecognition: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val r6Ready = selectedCollectorModel == CollectorModel.R6
+    val isConnecting = connectionState == RfidConnectionState.Connecting
+    val isConnected = connectionState == RfidConnectionState.Connected
+    var showCollectorPicker by remember { mutableStateOf(false) }
     var showDevicePicker by remember { mutableStateOf(false) }
     val deviceAvailabilityMessage = when {
         isSearchingDevices -> "Buscando leitores ativos..."
@@ -171,6 +174,14 @@ fun SettingsScreenPreviewContent(
     fun closeDevicePicker() {
         showDevicePicker = false
         onStopDeviceScan()
+    }
+
+    fun openCollectorPicker() {
+        showCollectorPicker = true
+    }
+
+    fun closeCollectorPicker() {
+        showCollectorPicker = false
     }
 
     Scaffold(
@@ -206,32 +217,15 @@ fun SettingsScreenPreviewContent(
                     eyebrow = "COLETOR",
                     title = "Modelo em uso"
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                    ) {
-                        CollectorOptionButton(
-                            label = "C72",
-                            icon = Icons.Outlined.Memory,
-                            selected = selectedCollectorModel == CollectorModel.C72,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onCollectorModelSelected(CollectorModel.C72) }
-                        )
-                        CollectorOptionButton(
-                            label = "R6",
-                            icon = Icons.Outlined.BluetoothConnected,
-                            selected = selectedCollectorModel == CollectorModel.R6,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onCollectorModelSelected(CollectorModel.R6) }
-                        )
-                        CollectorOptionButton(
-                            label = "MC339U",
-                            icon = Icons.Outlined.Devices,
-                            selected = selectedCollectorModel == CollectorModel.MC339U,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onCollectorModelSelected(CollectorModel.MC339U) }
-                        )
-                    }
+                    Text(
+                        text = "Toque na barra abaixo para selecionar o modelo do coletor.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TextSecondary
+                    )
+                    CollectorPickerField(
+                        selectedModel = selectedCollectorModel,
+                        onClick = ::openCollectorPicker
+                    )
                 }
             }
 
@@ -337,13 +331,31 @@ fun SettingsScreenPreviewContent(
                 item {
                     SettingsSectionCard(
                         eyebrow = "C72",
-                        title = "Fluxo fisico"
+                        title = "Leitor interno"
                     ) {
                         Text(
-                            text = "O C72 continua plug and play, mas a conexao fisica sera tratada na etapa especifica dele.",
+                            text = "Conecte o leitor interno para validar a comunicacao com o coletor.",
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary
                         )
+                        ActionButtonPrimary(
+                            text = when {
+                                isConnected -> "C72 conectado"
+                                isConnecting -> "Conectando..."
+                                else -> "Conectar C72"
+                            },
+                            onClick = onConnectInternalCollector,
+                            enabled = !isConnected && !isConnecting
+                        )
+                        if (isConnected) {
+                            ActionButtonOutline(
+                                text = "Desconectar",
+                                onClick = onDisconnect,
+                                borderColor = AppColors.Divider,
+                                containerColor = AppColors.CardSurfaceHighlight,
+                                contentColor = AppColors.TopBarOnBlue
+                            )
+                        }
                     }
                 }
             }
@@ -369,6 +381,17 @@ fun SettingsScreenPreviewContent(
                 closeDevicePicker()
             },
             onDismiss = ::closeDevicePicker
+        )
+    }
+
+    if (showCollectorPicker) {
+        CollectorPickerDialog(
+            selectedModel = selectedCollectorModel,
+            onSelect = { model ->
+                onCollectorModelSelected(model)
+                closeCollectorPicker()
+            },
+            onDismiss = ::closeCollectorPicker
         )
     }
 
@@ -412,10 +435,10 @@ private fun SettingsHeroCard(
                         color = AppColors.BrandSignalBlue
                     )
                     Text(
-                        text = if (selectedCollectorModel == CollectorModel.R6) {
-                            "Conexao pronta para o R6"
-                        } else {
-                            "C72 selecionado"
+                        text = when (selectedCollectorModel) {
+                            CollectorModel.R6 -> "Conexao pronta para o R6"
+                            CollectorModel.C72 -> "C72 selecionado"
+                            CollectorModel.MC339U -> "MC339U selecionado"
                         },
                         style = MaterialTheme.typography.headlineSmall,
                         color = AppColors.TopBarOnBlue
@@ -429,10 +452,10 @@ private fun SettingsHeroCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (selectedCollectorModel == CollectorModel.R6) {
-                            Icons.Outlined.BluetoothConnected
-                        } else {
-                            Icons.Outlined.Memory
+                        imageVector = when (selectedCollectorModel) {
+                            CollectorModel.R6 -> Icons.Outlined.BluetoothConnected
+                            CollectorModel.C72 -> Icons.Outlined.Memory
+                            CollectorModel.MC339U -> Icons.Outlined.Devices
                         },
                         contentDescription = null,
                         tint = AppColors.TopBarOnBlue
@@ -513,41 +536,6 @@ private fun SettingsSectionCard(
 }
 
 @Composable
-private fun CollectorOptionButton(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier,
-        shape = AppShapes.button,
-        border = BorderStroke(
-            1.dp,
-            if (selected) AppColors.PrimaryActionBlue else AppColors.Divider
-        ),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground,
-            contentColor = if (selected) AppColors.TopBarBlue else AppColors.TextPrimary
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = AppSpacing.xs),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(imageVector = icon, contentDescription = null)
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-    }
-}
-
-@Composable
 private fun DevicePickerField(
     value: String?,
     placeholder: String,
@@ -577,6 +565,41 @@ private fun DevicePickerField(
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyMedium,
             color = textColor
+        )
+        Icon(
+            imageVector = Icons.Outlined.Search,
+            contentDescription = null,
+            tint = AppColors.TextSecondary
+        )
+    }
+}
+
+@Composable
+private fun CollectorPickerField(
+    selectedModel: CollectorModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .border(1.dp, AppColors.Divider, AppShapes.input)
+            .background(AppColors.FieldBackground, AppShapes.input)
+            .clickable(onClick = onClick)
+            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = collectorIcon(selectedModel),
+            contentDescription = null,
+            tint = AppColors.TopBarBlue
+        )
+        Text(
+            text = collectorLabel(selectedModel),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = AppColors.TextPrimary
         )
         Icon(
             imageVector = Icons.Outlined.Search,
@@ -671,6 +694,70 @@ private fun DevicePickerDialog(
 }
 
 @Composable
+private fun CollectorPickerDialog(
+    selectedModel: CollectorModel,
+    onSelect: (CollectorModel) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
+            border = BorderStroke(1.dp, AppColors.BrandSignalBlue.copy(alpha = 0.44f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Text(
+                    text = "COLETORES DISPONIVEIS",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AppColors.BrandSignalBlue
+                )
+                Text(
+                    text = "Escolha o modelo do coletor para configurar a conexao.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                ) {
+                    CollectorRow(
+                        model = CollectorModel.C72,
+                        selected = selectedModel == CollectorModel.C72,
+                        onSelect = { onSelect(CollectorModel.C72) }
+                    )
+                    CollectorRow(
+                        model = CollectorModel.R6,
+                        selected = selectedModel == CollectorModel.R6,
+                        onSelect = { onSelect(CollectorModel.R6) }
+                    )
+                    CollectorRow(
+                        model = CollectorModel.MC339U,
+                        selected = selectedModel == CollectorModel.MC339U,
+                        onSelect = { onSelect(CollectorModel.MC339U) }
+                    )
+                }
+
+                ActionButtonOutline(
+                    text = "FECHAR",
+                    onClick = onDismiss,
+                    borderColor = AppColors.Divider,
+                    containerColor = AppColors.CardSurfaceHighlight,
+                    contentColor = AppColors.TopBarOnBlue
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun DeviceRow(
     device: RfidDevice,
     selected: Boolean,
@@ -732,6 +819,91 @@ private fun DeviceRow(
                 color = AppColors.BrandSignalBlue
             )
         }
+    }
+}
+
+@Composable
+private fun CollectorRow(
+    model: CollectorModel,
+    selected: Boolean,
+    onSelect: () -> Unit
+) {
+    val borderColor = if (selected) AppColors.BrandSignalBlue else AppColors.Divider
+    val backgroundColor = if (selected) AppColors.BrandSignalBlue.copy(alpha = 0.12f) else AppColors.CardSurfaceHighlight
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(0.5.dp, borderColor, AppShapes.card)
+            .background(backgroundColor, AppShapes.card)
+            .clickable(enabled = !selected, onClick = onSelect)
+            .padding(AppSpacing.md),
+        horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .background(AppColors.CardSurface, CircleShape)
+                .border(0.5.dp, AppColors.Divider, CircleShape)
+                .padding(AppSpacing.sm),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = collectorIcon(model),
+                contentDescription = null,
+                tint = if (selected) AppColors.BrandSignalBlue else AppColors.TextSecondary
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+        ) {
+            Text(
+                text = collectorLabel(model),
+                style = MaterialTheme.typography.titleSmall,
+                color = AppColors.TopBarOnBlue
+            )
+            Text(
+                text = collectorSubtitle(model),
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary
+            )
+        }
+
+        if (selected) {
+            StatusPill(
+                text = "SELECIONADO",
+                background = AppColors.PositiveGreen.copy(alpha = 0.16f),
+                contentColor = AppColors.PositiveGreen
+            )
+        } else {
+            Text(
+                text = "ESCOLHER",
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                color = AppColors.BrandSignalBlue
+            )
+        }
+    }
+}
+
+private fun collectorIcon(model: CollectorModel): ImageVector {
+    return when (model) {
+        CollectorModel.C72 -> Icons.Outlined.Memory
+        CollectorModel.R6 -> Icons.Outlined.BluetoothConnected
+        CollectorModel.MC339U -> Icons.Outlined.Devices
+    }
+}
+
+private fun collectorLabel(model: CollectorModel): String {
+    return "COLETOR ${model.label}"
+}
+
+private fun collectorSubtitle(model: CollectorModel): String {
+    return when (model) {
+        CollectorModel.C72 -> "Leitor interno (UART)"
+        CollectorModel.R6 -> "Leitor Bluetooth"
+        CollectorModel.MC339U -> "Servico Zebra"
     }
 }
 
@@ -873,6 +1045,7 @@ private fun SettingsScreenPreview() {
             onStartR6Flow = {},
             onStopDeviceScan = {},
             onConnectDevice = {},
+            onConnectInternalCollector = {},
             onDisconnect = {},
             onDismissRecognition = {},
             onDismissError = {}

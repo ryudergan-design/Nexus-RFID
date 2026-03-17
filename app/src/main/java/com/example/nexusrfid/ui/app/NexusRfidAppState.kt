@@ -124,6 +124,12 @@ class NexusRfidAppState internal constructor(
             }
             RfidConnectionState.Connecting -> {
                 readerRecognitionState = ReaderRecognitionState.Checking
+                errorMessage = null
+            }
+            RfidConnectionState.Error -> {
+                readerRecognitionState = ReaderRecognitionState.Unknown
+                recognitionFeedback = null
+                errorMessage = connectionErrorMessage()
             }
             else -> {
                 readerRecognitionState = ReaderRecognitionState.Unknown
@@ -244,6 +250,18 @@ class NexusRfidAppState internal constructor(
         currentReader.connect(device.address)
     }
 
+    fun connectInternalCollector() {
+        if (selectedCollectorModel != CollectorModel.C72) return
+
+        errorMessage = null
+        stopDeviceScan()
+        val internalDevice = RfidDevice(name = "LEITOR C72", address = "UART")
+        readerRecognitionState = ReaderRecognitionState.Checking
+        recognitionFeedback = null
+        statusMessage = "Conectando em ${internalDevice.displayName}..."
+        currentReader.connect(internalDevice.address)
+    }
+
     fun disconnectReader() {
         stopInventory()
         stopDeviceScan()
@@ -335,6 +353,17 @@ class NexusRfidAppState internal constructor(
             RfidConnectionState.Connected -> "${device?.displayName ?: modelLabel} conectado."
             RfidConnectionState.Disconnected -> "Coletor desconectado."
             RfidConnectionState.Error -> "Nao foi possivel falar com o coletor agora."
+        }
+    }
+
+    private fun connectionErrorMessage(): String {
+        return when (selectedCollectorModel) {
+            CollectorModel.C72 ->
+                "Falha ao iniciar o leitor interno C72. Verifique se o coletor esta com o leitor habilitado e tente novamente."
+            CollectorModel.R6 ->
+                "Falha ao conectar ao leitor Bluetooth. Verifique se ele esta ligado e pareado."
+            CollectorModel.MC339U ->
+                "Falha ao iniciar o servico Zebra. Verifique se o leitor esta habilitado."
         }
     }
 }

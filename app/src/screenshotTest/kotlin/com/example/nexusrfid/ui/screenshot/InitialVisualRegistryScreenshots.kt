@@ -213,6 +213,7 @@ fun SettingsVisualRegistryScreenshot() {
             onStartR6Flow = {},
             onStopDeviceScan = {},
             onConnectDevice = {},
+            onConnectInternalCollector = {},
             onDisconnect = {},
             onDismissRecognition = {},
             onDismissError = {}
