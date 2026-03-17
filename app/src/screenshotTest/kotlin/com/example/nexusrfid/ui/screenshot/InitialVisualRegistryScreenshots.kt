@@ -206,6 +206,7 @@ fun SettingsVisualRegistryScreenshot() {
             soundEnabled = MockDataSource.settingsPreviewState.soundEnabled,
             isSearchingDevices = MockDataSource.settingsPreviewState.isSearchingDevices,
             availableDevices = MockDataSource.r6PreviewDevices,
+            recognitionFeedback = null,
             errorMessage = null,
             onCollectorModelSelected = {},
             onSoundChange = {},
@@ -213,6 +214,7 @@ fun SettingsVisualRegistryScreenshot() {
             onStopDeviceScan = {},
             onConnectDevice = {},
             onDisconnect = {},
+            onDismissRecognition = {},
             onDismissError = {}
         )
     }
