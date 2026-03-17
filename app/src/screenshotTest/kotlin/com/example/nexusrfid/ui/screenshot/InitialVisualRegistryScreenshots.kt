@@ -20,6 +20,9 @@ import com.example.nexusrfid.ui.screens.departments.DepartmentsScreen
 import com.example.nexusrfid.ui.screens.inventory.InventoryScreen
 import com.example.nexusrfid.ui.screens.login.LoginScreen
 import com.example.nexusrfid.ui.screens.products.ProductsScreen
+import com.example.nexusrfid.ui.screens.settings.SettingsScreenPreviewContent
+import com.example.nexusrfid.rfid.CollectorModel
+import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.NexusRFIDTheme
 
@@ -138,7 +141,9 @@ fun GlobalSearchVisualRegistryScreenshot() {
             searchSummary = MockDataSource.searchSummary,
             searchTargets = MockDataSource.searchTargets,
             searchTypes = MockDataSource.searchTypes,
-            onMenuClick = {}
+            onMenuClick = {},
+            initialSelectedTypeKey = "tag",
+            initialTagTargets = MockDataSource.rfidTagPreviewTargets
         )
     }
 }
@@ -192,7 +197,26 @@ fun MovementVisualRegistryScreenshot() {
 )
 @Composable
 fun SettingsVisualRegistryScreenshot() {
-    PlaceholderRegistryScreen(AppDestination.Settings)
+    NexusRFIDTheme {
+        SettingsScreenPreviewContent(
+            onMenuClick = {},
+            selectedCollectorModel = CollectorModel.R6,
+            connectionState = RfidConnectionState.Connected,
+            statusMessage = MockDataSource.settingsPreviewState.statusMessage,
+            connectedDevice = MockDataSource.settingsPreviewState.connectedDevice,
+            soundEnabled = MockDataSource.settingsPreviewState.soundEnabled,
+            isSearchingDevices = MockDataSource.settingsPreviewState.isSearchingDevices,
+            availableDevices = MockDataSource.r6PreviewDevices,
+            errorMessage = null,
+            onCollectorModelSelected = {},
+            onSoundChange = {},
+            onStartR6Flow = {},
+            onStopDeviceScan = {},
+            onConnectDevice = {},
+            onDisconnect = {},
+            onDismissError = {}
+        )
+    }
 }
 
 @PreviewTest

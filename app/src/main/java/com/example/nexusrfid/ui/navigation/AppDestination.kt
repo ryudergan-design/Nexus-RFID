@@ -48,7 +48,7 @@ enum class AppDestination(
     Settings(
         route = "settings",
         title = "Configuracoes",
-        summary = "Ajustes do leitor, dispositivo e preferencias."
+        summary = "Escolha do coletor e configuracao minima da operacao."
     ),
     FreeRead(
         route = "free_read",
@@ -66,7 +66,6 @@ enum class AppDestination(
             AssociateTags,
             Invoice,
             Movement,
-            Settings,
             FreeRead,
             Devices
         )

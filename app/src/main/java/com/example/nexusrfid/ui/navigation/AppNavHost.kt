@@ -14,12 +14,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.nexusrfid.ui.components.DrawerMenu
 import com.example.nexusrfid.data.mock.MockDataSource
+import com.example.nexusrfid.ui.app.NexusRfidAppState
 import com.example.nexusrfid.ui.screens.departments.DepartmentsScreen
 import com.example.nexusrfid.ui.screens.globalsearch.GlobalSearchScreen
 import com.example.nexusrfid.ui.screens.inventory.InventoryScreen
 import com.example.nexusrfid.ui.screens.login.LoginScreen
 import com.example.nexusrfid.ui.screens.products.ProductsScreen
 import com.example.nexusrfid.ui.screens.core.PhasePlaceholderScreen
+import com.example.nexusrfid.ui.screens.settings.SettingsScreen
 import com.example.nexusrfid.ui.theme.AppColors
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
@@ -29,6 +31,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavHost(
+    appState: NexusRfidAppState,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
 ) {
@@ -101,6 +104,19 @@ fun AppNavHost(
                     searchSummary = MockDataSource.searchSummary,
                     searchTargets = MockDataSource.searchTargets,
                     searchTypes = MockDataSource.searchTypes,
+                    onMenuClick = onMenuClick,
+                    appState = appState
+                )
+            }
+        }
+
+        composable(AppDestination.Settings.route) {
+            DrawerDestination(
+                navController = navController,
+                currentRoute = AppDestination.Settings.route
+            ) { onMenuClick ->
+                SettingsScreen(
+                    appState = appState,
                     onMenuClick = onMenuClick
                 )
             }

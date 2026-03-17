@@ -1,5 +1,7 @@
 package com.example.nexusrfid.data.mock
 
+import com.example.nexusrfid.rfid.RfidDevice
+
 object MockDataSource {
     const val appVersion = "V 1.1.23-2"
 
@@ -112,6 +114,49 @@ object MockDataSource {
             inputPlaceholder = "Digite a tag",
             numericInput = false
         )
+    )
+
+    val rfidTagPreviewTargets = listOf(
+        RfidTargetPreviewItem(
+            epc = "E28069950000502122380001",
+            proximityPercent = 84,
+            proximityLabel = "Muito perto",
+            matchedProductName = "ACESSORIO EM MACRAME"
+        ),
+        RfidTargetPreviewItem(
+            epc = "E28069950000502114210007",
+            proximityPercent = 52,
+            proximityLabel = "Perto",
+            matchedProductName = "BERMUDA SARJA FORUM"
+        ),
+        RfidTargetPreviewItem(
+            epc = "E28069950000502140510010",
+            proximityPercent = 18,
+            proximityLabel = "Longe",
+            matchedProductName = "VESTIDO MIDI OPEN"
+        )
+    )
+
+    val r6PreviewDevices = listOf(
+        RfidDevice(
+            name = "R6 Nexus 01",
+            address = "00:11:22:33:44:55",
+            rssi = -48,
+            bonded = true
+        ),
+        RfidDevice(
+            name = "R6 Nexus 02",
+            address = "66:77:88:99:AA:BB",
+            rssi = -62,
+            bonded = false
+        )
+    )
+
+    val settingsPreviewState = RfidSettingsPreviewState(
+        statusMessage = "R6 Nexus 01 conectado.",
+        connectedDevice = r6PreviewDevices.first(),
+        soundEnabled = true,
+        isSearchingDevices = false
     )
 
     val products = listOf(

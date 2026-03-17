@@ -1,5 +1,7 @@
 package com.example.nexusrfid.data.mock
 
+import com.example.nexusrfid.rfid.RfidDevice
+
 data class DepartmentListItem(
     val code: String,
     val name: String
@@ -56,3 +58,17 @@ data class SearchTypeOption(
     val requiresManualEntry: Boolean
         get() = dialogTitle != null
 }
+
+data class RfidTargetPreviewItem(
+    val epc: String,
+    val proximityPercent: Int,
+    val proximityLabel: String,
+    val matchedProductName: String? = null
+)
+
+data class RfidSettingsPreviewState(
+    val statusMessage: String,
+    val connectedDevice: RfidDevice? = null,
+    val soundEnabled: Boolean = true,
+    val isSearchingDevices: Boolean = false
+)

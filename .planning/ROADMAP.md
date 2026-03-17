@@ -2,7 +2,7 @@
 
 ## Overview
 
-O projeto sera entregue em camadas. Primeiro sera criada uma base Android Compose capaz de reproduzir fielmente o app legado com navegacao e mocks. Em seguida, as telas operacionais restantes serao concluidas e refinadas. So depois dessa estabilidade visual a integracao real com os leitores C72 e UR6/R6 entrara em cena, isolada em uma camada propria para reduzir risco tecnico.
+O projeto sera entregue em camadas. Primeiro sera criada uma base Android Compose capaz de reproduzir fielmente o app legado com navegacao e mocks. Em seguida, as telas operacionais restantes serao concluidas e refinadas. Entre a busca detalhada e os fluxos fiscais, havera uma antecipacao controlada do R6 por Bluetooth para viabilizar um primeiro teste real de busca RFID sem esperar a integracao completa multi-dispositivo. Depois dessa validacao minima, a integracao completa com os leitores C72 e UR6/R6 entrara em cena em uma camada propria para reduzir risco tecnico.
 
 ## Phases
 
@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Fluxos iniciais** - Implementar Login, Departamentos, Inventario e drawer lateral.
 - [x] **Phase 3: Catalogo e busca global** - Implementar Produtos, Busca Global e dialogos de entrada.
 - [ ] **Phase 4: Busca de produto e associacao** - Entregar Buscar Global Produto e Associar Tags.
+- [x] **Phase 4.5: Integracao minima do R6 para busca RFID (INSERTED)** - Antecipar um primeiro teste real do R6 via Bluetooth com fluxo simples e plug and play.
 - [ ] **Phase 5: Fluxos fiscais e configuracoes** - Implementar Nota Fiscal, Movimentacao e Configuracoes com seus modais.
 - [ ] **Phase 6: Leitura Livre e acabamento visual** - Finalizar Leitura Livre, lista de dispositivos, previews e revisao de fidelidade.
 - [ ] **Phase 7: Integracao RFID real C72 e UR6/R6** - Preparar adaptadores e conectar os fluxos reais do leitor com base no demo legado.
@@ -81,6 +82,21 @@ Plans:
 - [ ] 04-01: Implementar Buscar Global Produto com seus estados visuais.
 - [ ] 04-02: Implementar Associar Tags reaproveitando componentes comuns.
 
+### Phase 4.5: Integracao minima do R6 para busca RFID (INSERTED)
+**Goal**: Antecipar um primeiro teste real do leitor R6 em um fluxo simples de busca RFID, sem esperar a integracao completa dos dois modelos.
+**Depends on**: Phase 4
+**Requirements**: [REQ-10, REQ-17, REQ-19, REQ-20]
+**Success Criteria** (what must be TRUE):
+1. O app aceita busca manual por tag/EPC com 24 caracteres em um fluxo coerente com `Buscar Produtos`.
+2. O leitor R6 pode ser descoberto, selecionado e conectado por Bluetooth com o minimo de configuracao manual.
+3. Uma leitura real do R6 pode alimentar a busca por tag sem acoplar a UI Compose diretamente ao demo legado.
+**Plans**: 3 plans
+
+Plans:
+- [x] 04.5-01: Adaptar a base minima de descoberta e conexao Bluetooth do R6 para a nova camada `rfid`.
+- [x] 04.5-02: Integrar entrada manual de EPC de 24 caracteres e leitura recebida do R6 ao fluxo de busca.
+- [x] 04.5-03: Validar o fluxo plug and play em aparelho real, registrar configuracao e gerar APK de teste.
+
 ### Phase 5: Fluxos fiscais e configuracoes
 **Goal**: Recriar as telas fiscais e de configuracao, incluindo modais e permissoes.
 **Depends on**: Phase 4
@@ -129,7 +145,9 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 4.5 -> 5 -> 6 -> 7
+
+Note: A Fase 4.5 foi executada antes da Fase 4 por prioridade de teste real do R6. O foco funcional principal do backlog continua na Fase 4.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -137,6 +155,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Fluxos iniciais | 3/3 | Complete | 2026-03-16 |
 | 3. Catalogo e busca global | 3/3 | Complete | 2026-03-16 |
 | 4. Busca de produto e associacao | 0/2 | Not started | - |
+| 4.5. Integracao minima do R6 para busca RFID (INSERTED) | 3/3 | Complete (out of order) | 2026-03-17 |
 | 5. Fluxos fiscais e configuracoes | 0/3 | Not started | - |
 | 6. Leitura Livre e acabamento visual | 0/3 | Not started | - |
 | 7. Integracao RFID real C72 e UR6/R6 | 0/3 | Not started | - |
