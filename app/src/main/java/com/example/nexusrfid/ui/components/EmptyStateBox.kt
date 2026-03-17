@@ -49,7 +49,7 @@ fun EmptyStateBox(
             ActionButtonOutline(
                 text = actionLabel,
                 onClick = onAction,
-                borderColor = AppColors.PositiveBorder,
+                borderColor = AppColors.PositiveGreen,
                 contentColor = AppColors.PositiveGreen
             )
         }

@@ -50,7 +50,7 @@ private fun ComponentCatalog() {
             ActionButtonOutline(
                 text = "Adicionar Targets",
                 onClick = {},
-                borderColor = AppColors.PositiveBorder,
+                borderColor = AppColors.PositiveGreen,
                 contentColor = AppColors.PositiveGreen
             )
 

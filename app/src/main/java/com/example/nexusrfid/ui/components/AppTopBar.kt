@@ -18,6 +18,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.border
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,13 +35,13 @@ fun AppTopBar(
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: ImageVector = Icons.Outlined.Menu,
     navigationContentDescription: String = "Abrir menu",
-    eyebrow: String? = "Nexus RFID",
+    eyebrow: String? = "NEXUS RFID",
     navigationIconBackground: Boolean = true,
     showDivider: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(
-        color = AppColors.TopBarBlue,
+        color = Color.Transparent,
         contentColor = AppColors.TopBarOnBlue
     ) {
         Column {
@@ -47,9 +50,10 @@ fun AppTopBar(
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         if (!eyebrow.isNullOrBlank()) {
                             Text(
-                                text = eyebrow,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = AppColors.TopBarOnBlue.copy(alpha = 0.72f),
+                                text = eyebrow.uppercase(),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontSize = 10.sp,
+                                color = AppColors.BrandSignalBlue,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -65,25 +69,20 @@ fun AppTopBar(
                 },
                 navigationIcon = {
                     if (onNavigationClick != null) {
-                        val navigationModifier = if (navigationIconBackground) {
-                            Modifier
-                                .size(40.dp)
-                                .background(
-                                    color = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
-                                    shape = AppShapes.input
-                                )
-                        } else {
-                            Modifier.size(40.dp)
-                        }
-
                         IconButton(
                             onClick = onNavigationClick,
-                            modifier = navigationModifier
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(
+                                    color = AppColors.CardSurfaceHighlight,
+                                    shape = AppShapes.input
+                                )
+                                .border(0.5.dp, AppColors.Divider, AppShapes.input)
                         ) {
                             Icon(
                                 imageVector = navigationIcon,
                                 contentDescription = navigationContentDescription,
-                                tint = AppColors.TopBarOnBlue
+                                tint = AppColors.BrandSignalBlue
                             )
                         }
                     }
@@ -92,13 +91,13 @@ fun AppTopBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
                     titleContentColor = AppColors.TopBarOnBlue,
-                    navigationIconContentColor = AppColors.TopBarOnBlue,
+                    navigationIconContentColor = AppColors.BrandSignalBlue,
                     actionIconContentColor = AppColors.TopBarOnBlue
                 )
             )
 
             if (showDivider) {
-                HorizontalDivider(color = AppColors.TopBarOnBlue.copy(alpha = 0.08f))
+                HorizontalDivider(color = AppColors.Divider, thickness = 0.5.dp)
             }
         }
     }

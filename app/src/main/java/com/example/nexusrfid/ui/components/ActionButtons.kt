@@ -15,6 +15,14 @@ import androidx.compose.ui.unit.dp
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+
 @Composable
 fun ActionButtonPrimary(
     text: String,
@@ -27,23 +35,35 @@ fun ActionButtonPrimary(
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
         shape = AppShapes.button,
+        contentPadding = PaddingValues(0.dp),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,
             pressedElevation = 0.dp,
             disabledElevation = 0.dp
         ),
         colors = ButtonDefaults.buttonColors(
-            containerColor = AppColors.PrimaryActionBlue,
+            containerColor = Color.Transparent,
             contentColor = AppColors.TopBarOnBlue,
             disabledContainerColor = AppColors.MutedSurface,
             disabledContentColor = AppColors.TextSecondary
         )
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(vertical = 2.dp),
-            style = MaterialTheme.typography.labelLarge
+        val brush = Brush.linearGradient(
+            colors = listOf(AppColors.PrimaryActionBlue, AppColors.BrandSignalBlue)
         )
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(if (enabled) brush else Brush.linearGradient(listOf(AppColors.MutedSurface, AppColors.MutedSurface)))
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text.uppercase(),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
 }
 
@@ -54,7 +74,7 @@ fun ActionButtonOutline(
     modifier: Modifier = Modifier,
     borderColor: Color = AppColors.Divider,
     contentColor: Color = AppColors.TextPrimary,
-    containerColor: Color = AppColors.FieldBackground,
+    containerColor: Color = AppColors.CardSurface,
     enabled: Boolean = true
 ) {
     OutlinedButton(
@@ -71,13 +91,12 @@ fun ActionButtonOutline(
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = containerColor,
             contentColor = contentColor,
-            disabledContainerColor = AppColors.FieldBackground,
+            disabledContainerColor = Color.Transparent,
             disabledContentColor = AppColors.TextSecondary
         )
     ) {
         Text(
-            text = text,
-            modifier = Modifier.padding(vertical = 2.dp),
+            text = text.uppercase(),
             style = MaterialTheme.typography.labelLarge
         )
     }

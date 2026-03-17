@@ -29,9 +29,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.nexusrfid.data.mock.DrawerMenuItem
@@ -54,65 +59,58 @@ fun DrawerMenu(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(AppColors.CardSurface)
+            .background(AppColors.ScreenBackground)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
         ) {
             item {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(AppColors.TopBarBlue)
-                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.lg),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.md)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .background(
-                                    color = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
-                                    shape = AppShapes.card
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    AppColors.BrandSignalBlue.copy(alpha = 0.05f),
+                                    Color.Transparent
                                 )
-                                .border(
-                                    width = 1.dp,
-                                    color = AppColors.TopBarOnBlue.copy(alpha = 0.08f),
-                                    shape = AppShapes.card
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            NexusRfidBrandMark(modifier = Modifier.size(28.dp))
-                        }
-
-                        Text(
-                            text = "Nexus RFID",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = AppColors.TopBarOnBlue
+                            )
                         )
-                    }
-
-                    Text(
-                        text = version,
+                        .padding(horizontal = AppSpacing.lg, vertical = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                ) {
+                    Box(
                         modifier = Modifier
+                            .size(56.dp)
                             .background(
-                                color = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
-                                shape = AppShapes.button
+                                color = AppColors.CardSurfaceHighlight,
+                                shape = AppShapes.card
                             )
                             .border(
                                 width = 1.dp,
-                                color = AppColors.TopBarOnBlue.copy(alpha = 0.08f),
-                                shape = AppShapes.button
-                            )
-                            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TopBarOnBlue
-                    )
+                                color = AppColors.BrandSignalBlue.copy(alpha = 0.2f),
+                                shape = AppShapes.card
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        NexusRfidBrandMark(modifier = Modifier.size(32.dp))
+                    }
+
+                    Column {
+                        Text(
+                            text = "NEXUS RFID",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = AppColors.BrandSignalBlue,
+                            letterSpacing = 0.2.em
+                        )
+                        Text(
+                            text = version,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextSecondary,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
                 }
             }
 
@@ -189,20 +187,18 @@ private fun DrawerMenuRow(
             .fillMaxWidth()
             .background(
                 color = when {
-                    selected -> AppColors.AccentSurface
-                    nested -> AppColors.FieldBackground
-                    else -> AppColors.CardSurface
+                    selected -> AppColors.BrandSignalBlue.copy(alpha = 0.08f)
+                    else -> if (nested) Color.Transparent else AppColors.CardSurface
                 },
-                shape = AppShapes.card
+                shape = AppShapes.button
             )
             .border(
                 width = 1.dp,
                 color = when {
-                    selected -> AppColors.BrandSignalBlue.copy(alpha = 0.34f)
-                    nested -> AppColors.AccentBorder
-                    else -> AppColors.Divider
+                    selected -> AppColors.BrandSignalBlue.copy(alpha = 0.44f)
+                    else -> if (nested) Color.Transparent else AppColors.Divider
                 },
-                shape = AppShapes.card
+                shape = AppShapes.button
             )
             .clickable(onClick = onClick)
             .padding(horizontal = AppSpacing.md, vertical = AppSpacing.md)
@@ -217,14 +213,16 @@ private fun DrawerMenuRow(
             Icon(
                 imageVector = iconFor(item.route),
                 contentDescription = null,
-                tint = if (selected || exitAction) AppColors.TopBarBlue else AppColors.TextSecondary
+                tint = if (selected) AppColors.BrandSignalBlue else AppColors.TextSecondary,
+                modifier = Modifier.size(20.dp)
             )
 
             Text(
-                text = item.label,
-                style = if (nested) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
-                color = if (selected) AppColors.TopBarBlue else AppColors.TextPrimary,
-                maxLines = 2,
+                text = if (nested) item.label else item.label.uppercase(),
+                style = if (nested) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.labelLarge,
+                fontSize = if (nested) 13.sp else 11.sp,
+                color = if (selected) AppColors.TopBarOnBlue else AppColors.TopBarOnBlue.copy(alpha = 0.7f),
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         }
@@ -243,8 +241,10 @@ private fun DrawerMenuRow(
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                     contentDescription = null,
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    tint = AppColors.TextSecondary
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(16.dp),
+                    tint = AppColors.TextSecondary.copy(alpha = 0.4f)
                 )
             }
         }

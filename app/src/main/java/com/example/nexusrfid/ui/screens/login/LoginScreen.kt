@@ -29,9 +29,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -84,9 +88,16 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp)
+                .height(320.dp)
                 .align(Alignment.TopCenter)
-                .background(color = AppColors.TopBarBlue.copy(alpha = 0.06f))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            AppColors.BrandSignalBlue.copy(alpha = 0.08f),
+                            Color.Transparent
+                        )
+                    )
+                )
         )
 
         Column(
@@ -97,13 +108,13 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Plataforma Nexus",
+                text = "PLATAFORMA NEXUS",
                 modifier = Modifier
-                    .background(AppColors.CardSurface, AppShapes.button)
+                    .background(AppColors.CardSurfaceHighlight, AppShapes.button)
                     .border(1.dp, AppColors.Divider, AppShapes.button)
                     .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                style = MaterialTheme.typography.bodySmall,
-                color = AppColors.TopBarBlue
+                style = MaterialTheme.typography.labelLarge,
+                color = AppColors.BrandSignalBlue
             )
 
             Spacer(modifier = Modifier.height(AppSpacing.lg))
@@ -121,21 +132,22 @@ fun LoginScreen(
                 border = BorderStroke(1.dp, AppColors.AccentBorder),
                 colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                shape = AppShapes.modal
+                shape = AppShapes.card
             ) {
                 Column(
                     modifier = Modifier.padding(AppSpacing.xl),
                     verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
                 ) {
                     Text(
-                        text = "Acesso seguro",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.BrandSignalBlue
+                        text = "ACESSO SEGURO",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = AppColors.BrandSignalBlue,
+                        fontSize = 10.sp
                     )
                     Text(
                         text = "Entrar no sistema",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = AppColors.TextPrimary
+                        color = AppColors.TopBarOnBlue
                     )
                     Text(
                         text = "Use suas credenciais para acessar a operacao RFID com a interface Nexus.",
@@ -143,9 +155,10 @@ fun LoginScreen(
                         color = AppColors.TextSecondary
                     )
                     Text(
-                        text = "Credencial deste build: $DemoUsername",
+                        text = "Credencial: $DemoUsername",
                         style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TopBarBlue
+                        color = AppColors.BrandSignalBlue.copy(alpha = 0.7f),
+                        fontFamily = FontFamily.Monospace
                     )
 
                     Spacer(modifier = Modifier.height(AppSpacing.xs))

@@ -11,6 +11,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.nexusrfid.ui.theme.AppColors
@@ -28,9 +30,9 @@ fun SimpleListRow(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(if (selected) AppColors.MutedSurface else AppColors.CardSurface)
+            .background(if (selected) AppColors.CardSurfaceHighlight else Color.Transparent)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .defaultMinSize(minHeight = 48.dp)
+            .defaultMinSize(minHeight = 56.dp)
     ) {
         Column(
             modifier = Modifier.padding(
@@ -41,7 +43,7 @@ fun SimpleListRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.TextPrimary,
+                color = if (selected) AppColors.BrandSignalBlue else AppColors.TopBarOnBlue,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -52,13 +54,18 @@ fun SimpleListRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = AppColors.TextSecondary,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    fontFamily = FontFamily.Monospace
                 )
             }
         }
 
         if (showDivider) {
-            HorizontalDivider(color = AppColors.Divider)
+            HorizontalDivider(
+                color = AppColors.Divider,
+                thickness = 0.5.dp,
+                modifier = Modifier.padding(horizontal = AppSpacing.lg)
+            )
         }
     }
 }

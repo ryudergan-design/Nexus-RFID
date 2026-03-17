@@ -5,10 +5,10 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 object AppShapes {
-    val input = RoundedCornerShape(0.dp)
-    val card = RoundedCornerShape(0.dp)
-    val button = RoundedCornerShape(0.dp)
-    val modal = RoundedCornerShape(0.dp)
+    val input = RoundedCornerShape(12.dp)
+    val card = RoundedCornerShape(24.dp)
+    val button = RoundedCornerShape(16.dp)
+    val modal = RoundedCornerShape(32.dp)
 }
 
 val NexusShapes = Shapes(
