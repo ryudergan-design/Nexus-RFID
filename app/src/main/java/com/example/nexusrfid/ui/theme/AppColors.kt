@@ -15,8 +15,8 @@ object AppColors {
     // Core System - Fluxo Primário
     val PrimaryActionBlue = Color(0xFF3B82F6) // blue-500
     val BrandSignalBlue = Color(0xFF22D3EE) // cyan-400 (Destaque Neon)
-    val TextPrimary = Color(0xFF67E8F9) // cyan-300
-    val TextSecondary = Color(0xFFA5F3FC).copy(alpha = 0.6f) // cyan-200 com alpha
+    val TextPrimary = Color(0xFFFFFFFF) // Branco puro para leitura principal
+    val TextSecondary = Color(0xFFA5F3FC).copy(alpha = 0.7f) // Ciano claro para secundário
     val TopBarBlue = Color(0xFF030712)
     val TopBarOnBlue = Color(0xFFFFFFFF)
 
@@ -42,17 +42,18 @@ object AppColors {
 
 val NexusLightColorScheme = lightColorScheme(
     primary = AppColors.PrimaryActionBlue,
-    onPrimary = AppColors.TopBarOnBlue,
+    onPrimary = Color.White,
     secondary = AppColors.PositiveGreen,
-    onSecondary = AppColors.TopBarOnBlue,
+    onSecondary = Color.White,
     tertiary = AppColors.BrandSignalBlue,
     background = AppColors.ScreenBackground,
-    onBackground = AppColors.TopBarOnBlue,
+    onBackground = AppColors.TextPrimary,
     surface = AppColors.CardSurface,
-    onSurface = AppColors.TopBarOnBlue,
+    onSurface = AppColors.TextPrimary,
     surfaceVariant = AppColors.FieldBackground,
     onSurfaceVariant = AppColors.TextSecondary,
     outline = AppColors.Divider,
     outlineVariant = AppColors.MutedSurface,
-    error = AppColors.DangerRed
+    error = AppColors.DangerRed,
+    onError = Color.White
 )
