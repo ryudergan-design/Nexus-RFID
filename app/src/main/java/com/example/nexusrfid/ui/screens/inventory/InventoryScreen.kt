@@ -20,7 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.example.nexusrfid.data.mock.InventoryCardItem
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.ui.components.AppTopBar
@@ -76,25 +79,26 @@ fun InventoryScreen(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             Text(
-                                text = "Inventarios",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = AppColors.TextPrimary
+                                text = "INVENTARIOS",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = AppColors.BrandSignalBlue
                             )
                             Text(
                                 text = "Atualizado com base em $latestUpdate",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextSecondary
+                                color = AppColors.TextSecondary,
+                                fontFamily = FontFamily.Monospace
                             )
                         }
 
                         Text(
-                            text = "${inventories.size} listas",
+                            text = "${inventories.size} LISTAS",
                             modifier = Modifier
-                                .background(AppColors.FieldBackground, AppShapes.button)
-                                .border(1.dp, AppColors.Divider, AppShapes.button)
+                                .background(AppColors.CardSurfaceHighlight, AppShapes.button)
+                                .border(0.5.dp, AppColors.Divider, AppShapes.button)
                                 .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AppColors.TopBarBlue
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                            color = AppColors.TopBarOnBlue
                         )
                     }
                 }

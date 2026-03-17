@@ -26,7 +26,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.nexusrfid.data.mock.InventoryCardItem
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
@@ -45,7 +49,7 @@ fun InventoryCard(
             if (item.selected) AppColors.BrandSignalBlue.copy(alpha = 0.40f) else AppColors.Divider
         ),
         colors = CardDefaults.cardColors(
-            containerColor = if (item.selected) AppColors.AccentSurface else AppColors.CardSurface
+            containerColor = if (item.selected) AppColors.CardSurfaceHighlight else AppColors.CardSurface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -55,7 +59,7 @@ fun InventoryCard(
                     .width(6.dp)
                     .fillMaxHeight()
                     .background(
-                        if (item.selected) AppColors.PrimaryActionBlue else AppColors.HeroSurfaceStrong
+                        if (item.selected) AppColors.BrandSignalBlue else AppColors.Divider
                     )
             )
 
@@ -71,22 +75,22 @@ fun InventoryCard(
                     InventoryPill(
                         text = if (item.selected) "EM FOCO" else "LISTA ATIVA",
                         containerColor = if (item.selected) {
-                            AppColors.PrimaryActionBlue.copy(alpha = 0.12f)
+                            AppColors.BrandSignalBlue.copy(alpha = 0.14f)
                         } else {
-                            AppColors.FieldBackground
+                            AppColors.CardSurfaceHighlight
                         },
                         contentColor = if (item.selected) {
-                            AppColors.PrimaryActionBlue
+                            AppColors.BrandSignalBlue
                         } else {
                             AppColors.TextSecondary
                         }
                     )
                     InventoryPill(
-                        text = "${item.systemStock} itens",
-                        containerColor = AppColors.CardSurface,
-                        contentColor = AppColors.TopBarBlue,
+                        text = "${item.systemStock} ITENS",
+                        containerColor = Color.Transparent,
+                        contentColor = AppColors.TopBarOnBlue,
                         borderColor = if (item.selected) {
-                            AppColors.BrandSignalBlue.copy(alpha = 0.36f)
+                            AppColors.BrandSignalBlue.copy(alpha = 0.44f)
                         } else {
                             AppColors.Divider
                         }
@@ -94,9 +98,9 @@ fun InventoryCard(
                 }
 
                 Text(
-                    text = item.title,
+                    text = item.title.uppercase(),
                     style = MaterialTheme.typography.titleMedium,
-                    color = AppColors.TextPrimary,
+                    color = AppColors.TopBarOnBlue,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -111,7 +115,7 @@ fun InventoryCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = if (item.selected) AppColors.HeroSurface else AppColors.FieldBackground,
+                            color = AppColors.CardSurfaceHighlight.copy(alpha = 0.2f),
                             shape = AppShapes.input
                         )
                         .border(
@@ -127,10 +131,11 @@ fun InventoryCard(
                             Icon(
                                 imageVector = Icons.Outlined.Schedule,
                                 contentDescription = null,
-                                tint = AppColors.TextSecondary
+                                tint = AppColors.TextSecondary,
+                                modifier = Modifier.size(16.dp)
                             )
                         },
-                        label = "Atualizado em",
+                        label = "ATUALIZADO EM",
                         value = item.dateTime
                     )
                     InventoryMetaRow(
@@ -138,10 +143,11 @@ fun InventoryCard(
                             Icon(
                                 imageVector = Icons.Outlined.Person,
                                 contentDescription = null,
-                                tint = AppColors.TextSecondary
+                                tint = AppColors.TextSecondary,
+                                modifier = Modifier.size(16.dp)
                             )
                         },
-                        label = "Responsavel",
+                        label = "RESPONSAVEL",
                         value = item.responsible
                     )
                     InventoryMetaRow(
@@ -149,10 +155,11 @@ fun InventoryCard(
                             Icon(
                                 imageVector = Icons.Outlined.Inventory2,
                                 contentDescription = null,
-                                tint = AppColors.TextSecondary
+                                tint = AppColors.BrandSignalBlue,
+                                modifier = Modifier.size(16.dp)
                             )
                         },
-                        label = "Estoque do sistema",
+                        label = "ESTOQUE DO SISTEMA",
                         value = item.systemStock.toString(),
                         emphasizeValue = true
                     )
@@ -176,9 +183,9 @@ private fun InventoryMetaRow(
     ) {
         Box(
             modifier = Modifier
-                .background(AppColors.CardSurface, AppShapes.input)
-                .border(1.dp, AppColors.Divider, AppShapes.input)
-                .padding(horizontal = AppSpacing.sm, vertical = AppSpacing.xs),
+                .background(AppColors.CardSurfaceHighlight, AppShapes.input)
+                .border(0.5.dp, AppColors.Divider, AppShapes.input)
+                .padding(AppSpacing.xs),
             contentAlignment = Alignment.Center
         ) {
             icon()
@@ -187,7 +194,7 @@ private fun InventoryMetaRow(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 9.sp),
                 color = AppColors.TextSecondary
             )
             Text(
@@ -197,7 +204,8 @@ private fun InventoryMetaRow(
                 } else {
                     MaterialTheme.typography.bodyMedium
                 },
-                color = if (emphasizeValue) AppColors.TopBarBlue else AppColors.TextPrimary
+                color = if (emphasizeValue) AppColors.BrandSignalBlue else AppColors.TopBarOnBlue,
+                fontFamily = if (emphasizeValue) FontFamily.Monospace else FontFamily.SansSerif
             )
         }
     }

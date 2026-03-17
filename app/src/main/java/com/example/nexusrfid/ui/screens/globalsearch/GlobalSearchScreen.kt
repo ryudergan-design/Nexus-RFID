@@ -478,7 +478,7 @@ private fun SearchOverviewCard(
                 Text(
                     text = statusLine,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.TopBarBlue
+                    color = AppColors.TextSecondary
                 )
             }
 
@@ -754,20 +754,20 @@ private fun OperationChip(
     Box(
         modifier = Modifier
             .background(
-                if (accent) AppColors.TopBarBlue.copy(alpha = 0.10f) else AppColors.FieldBackground,
+                if (accent) AppColors.BrandSignalBlue.copy(alpha = 0.14f) else AppColors.CardSurfaceHighlight,
                 AppShapes.button
             )
             .border(
-                1.dp,
-                if (accent) AppColors.AccentBorder else AppColors.Divider,
+                0.5.dp,
+                if (accent) AppColors.BrandSignalBlue else AppColors.Divider,
                 AppShapes.button
             )
             .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
     ) {
         Text(
-            text = text,
+            text = text.uppercase(),
             style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
-            color = if (accent) AppColors.TopBarBlue else AppColors.TextPrimary
+            color = if (accent) AppColors.BrandSignalBlue else AppColors.TopBarOnBlue
         )
     }
 }
@@ -852,26 +852,29 @@ private fun TargetButton(
             color = if (selected) AppColors.PrimaryActionBlue else AppColors.Divider
         ),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground,
-            contentColor = if (selected) AppColors.TopBarBlue else AppColors.TextPrimary
+            containerColor = if (selected) AppColors.BrandSignalBlue.copy(alpha = 0.14f) else AppColors.CardSurfaceHighlight,
+            contentColor = if (selected) AppColors.BrandSignalBlue else AppColors.TextSecondary
         )
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp)
+            )
             Box(
                 modifier = Modifier
-                    .size(22.dp)
+                    .size(20.dp)
                     .background(AppColors.CardSurface, AppShapes.button)
-                    .border(1.dp, AppColors.Divider, AppShapes.button),
+                    .border(1.dp, if (selected) AppColors.BrandSignalBlue else AppColors.Divider, AppShapes.button),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = count.toString(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = AppColors.TextSecondary
+                    color = if (selected) AppColors.BrandSignalBlue else AppColors.TextSecondary
                 )
             }
         }
@@ -980,7 +983,7 @@ private fun LegacyActionButton(
     val disabledColor = AppColors.TextSecondary.copy(alpha = 0.4f)
     val tint = when {
         !enabled -> disabledColor
-        active -> AppColors.TopBarBlue
+        active -> AppColors.BrandSignalBlue
         else -> AppColors.TextSecondary
     }
     val textColor = if (enabled) AppColors.TextSecondary else disabledColor
@@ -1014,9 +1017,6 @@ private fun LegacyTargetsCard(
     onClearTargets: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val panelColor = androidx.compose.ui.graphics.Color(0xFFEFEFEF)
-    val panelBorder = androidx.compose.ui.graphics.Color(0xFFD9D9D9)
-    val removeColor = androidx.compose.ui.graphics.Color(0xFFD06A6A)
     val message = if (tagCount == 0) {
         "Nenhum target para buscar ..."
     } else {
@@ -1026,8 +1026,8 @@ private fun LegacyTargetsCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = panelColor),
-        border = BorderStroke(1.dp, panelBorder),
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+        border = BorderStroke(1.dp, AppColors.Divider),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -1045,25 +1045,26 @@ private fun LegacyTargetsCard(
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodySmall,
                 color = AppColors.TextSecondary,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontFamily = FontFamily.Monospace
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
             ) {
                 LegacyTargetButton(
-                    text = "Adicionar Targets",
+                    text = "ADICIONAR TARGETS",
                     onClick = onAddTarget,
                     modifier = Modifier.weight(1f),
-                    borderColor = AppColors.PositiveGreen,
+                    borderColor = AppColors.PositiveGreen.copy(alpha = 0.6f),
                     contentColor = AppColors.PositiveGreen
                 )
                 LegacyTargetButton(
-                    text = "Remover Targets",
+                    text = "REMOVER TARGETS",
                     onClick = onClearTargets,
                     modifier = Modifier.weight(1f),
-                    borderColor = removeColor,
-                    contentColor = removeColor
+                    borderColor = AppColors.DangerRed.copy(alpha = 0.6f),
+                    contentColor = AppColors.DangerRed
                 )
             }
         }
@@ -1327,7 +1328,7 @@ private fun GlobalSearchContent(
         else -> "Conecte o coletor e use Iniciar para comecar a localizacao."
     }
 
-    val baseBackground = if (isTagMode) AppColors.CardSurface else AppColors.ScreenBackground
+    val baseBackground = AppColors.ScreenBackground
     var showPowerDialog by remember { mutableStateOf(false) }
 
     Box(

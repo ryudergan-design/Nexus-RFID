@@ -37,18 +37,18 @@ fun CounterBar(
         CounterItem(
             label = "Lidas",
             value = readCount.toString(),
-            backgroundColor = AppColors.DarkModal,
-            borderColor = AppColors.DarkModal,
-            contentColor = AppColors.TopBarOnBlue,
+            backgroundColor = AppColors.PrimaryActionBlue.copy(alpha = 0.14f),
+            borderColor = AppColors.BrandSignalBlue.copy(alpha = 0.44f),
+            contentColor = AppColors.BrandSignalBlue,
             modifier = Modifier.weight(1f)
         )
 
         CounterItem(
             label = "Encontradas",
             value = foundCount.toString(),
-            backgroundColor = AppColors.PositiveGreen,
-            borderColor = AppColors.PositiveGreen,
-            contentColor = AppColors.TopBarOnBlue,
+            backgroundColor = AppColors.PositiveGreen.copy(alpha = 0.14f),
+            borderColor = AppColors.PositiveGreen.copy(alpha = 0.44f),
+            contentColor = AppColors.PositiveGreen,
             modifier = Modifier.weight(1f)
         )
     }
