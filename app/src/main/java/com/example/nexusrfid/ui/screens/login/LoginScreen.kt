@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -87,10 +86,7 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .height(240.dp)
                 .align(Alignment.TopCenter)
-                .background(
-                    color = AppColors.TopBarBlue.copy(alpha = 0.06f),
-                    shape = RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp)
-                )
+                .background(color = AppColors.TopBarBlue.copy(alpha = 0.06f))
         )
 
         Column(

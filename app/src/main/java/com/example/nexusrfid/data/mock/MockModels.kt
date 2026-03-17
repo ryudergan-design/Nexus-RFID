@@ -16,7 +16,8 @@ data class InventoryCardItem(
 
 data class DrawerMenuItem(
     val label: String,
-    val route: String
+    val route: String,
+    val children: List<DrawerMenuItem> = emptyList()
 )
 
 data class ProductListItem(

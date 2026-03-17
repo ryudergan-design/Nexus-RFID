@@ -27,8 +27,8 @@ enum class AppDestination(
     ),
     GlobalSearch(
         route = "global_search",
-        title = "Busca Global",
-        summary = "Fluxo com leitura, contadores e selecao do tipo de busca."
+        title = "Buscar Produtos",
+        summary = "Fluxo de busca operacional com leitura, contadores e selecao do tipo de consulta."
     ),
     AssociateTags(
         route = "associate_tags",
@@ -42,8 +42,8 @@ enum class AppDestination(
     ),
     Movement(
         route = "movement",
-        title = "Movimentacao",
-        summary = "Conferencia de movimentacao com empty state semelhante a NF."
+        title = "Movimentacao de Estoque",
+        summary = "Conferencia de estoque com empty state semelhante ao fluxo de nota fiscal."
     ),
     Settings(
         route = "settings",

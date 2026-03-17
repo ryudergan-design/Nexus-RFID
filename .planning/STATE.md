@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 Phase: 3 of 7 (Catalogo e busca global)
 Plan: 0 of 3 in current phase
 Status: Ready to plan
-Last activity: 2026-03-16 - Git local inicializado, remoto GitHub conectado e registro inicial de telas gerado via screenshot por preview do Compose
+Last activity: 2026-03-16 - Menu inicial reorganizado com grupo de Conferencias, itens removidos e formas do app zeradas para visual quadrado
 
 Progress: [###-------] 30%
 
@@ -52,6 +52,8 @@ Recent decisions affecting current work:
 - [Global]: As telas iniciais agora usam cards de contexto, top bar com assinatura Nexus RFID e listas/cartoes na nova pele visual clara.
 - [Global]: O projeto passa a manter um historico visual em `registro-visual/`, com pasta inicial completa e futuras mudancas organizadas em `antes/` e `depois/`.
 - [Global]: O registro visual inicial passou a ser gerado por screenshots de preview do Compose, sem dependencia de emulador local.
+- [Global]: O menu inicial agora prioriza `Buscar Produtos`, `Produtos`, `Conferencias`, `Configuracoes` e `Sair`, com submenu expansivel para `Nota Fiscal` e `Movimentacao de Estoque`.
+- [Global]: O app inteiro passou a usar cantos retos em vez de bordas arredondadas.
 
 ### Pending Todos
 
@@ -64,6 +66,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16 22:11
-Stopped at: Registro inicial de telas gerado e pronto para versionamento; proxima acao recomendada e seguir para o proximo ajuste visual ou fase funcional
+Last session: 2026-03-16 22:29
+Stopped at: Mudanca visual do menu inicial registrada com antes/depois e codigo compilando; proxima acao recomendada e validar no APK ou seguir para o proximo ajuste
 Resume file: registro-visual/README.md

@@ -62,14 +62,17 @@ object MockDataSource {
     )
 
     val drawerItems = listOf(
-        DrawerMenuItem("Inventarios", "inventory"),
-        DrawerMenuItem("Produtos", "products"),
         DrawerMenuItem("Buscar Produtos", "global_search"),
-        DrawerMenuItem("Associar Tag", "associate_tags"),
-        DrawerMenuItem("Conferencia de Nota Fiscal", "invoice"),
-        DrawerMenuItem("Conferencia de nota fiscal com envio de dados", "invoice"),
-        DrawerMenuItem("Conferencia de Movimentacao Estoque com envio de dados", "movement"),
-        DrawerMenuItem("Configuracao", "settings"),
+        DrawerMenuItem("Produtos", "products"),
+        DrawerMenuItem(
+            label = "Conferencias",
+            route = "conferences",
+            children = listOf(
+                DrawerMenuItem("Nota Fiscal", "invoice"),
+                DrawerMenuItem("Movimentacao de Estoque", "movement")
+            )
+        ),
+        DrawerMenuItem("Configuracoes", "settings"),
         DrawerMenuItem("Sair", "login")
     )
 

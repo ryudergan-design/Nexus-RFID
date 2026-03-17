@@ -13,12 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Sell
@@ -29,6 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -49,6 +51,10 @@ fun DrawerMenu(
 ) {
     val primaryItems = items.filterNot { it.route == "login" }
     val logoutItem = items.firstOrNull { it.route == "login" }
+    val expandedGroups = remember { mutableStateMapOf<String, Boolean>() }
+    val shortcutCount = primaryItems.sumOf { item ->
+        if (item.children.isEmpty()) 1 else item.children.size
+    }
 
     Column(
         modifier = modifier
@@ -67,9 +73,7 @@ fun DrawerMenu(
                         .padding(horizontal = AppSpacing.md, vertical = AppSpacing.lg),
                     verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
                 ) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                         Row(
                             modifier = Modifier.padding(end = 92.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -143,12 +147,12 @@ fun DrawerMenu(
                                 color = AppColors.TopBarOnBlue.copy(alpha = 0.70f)
                             )
                             Text(
-                                text = "${primaryItems.size} atalhos prontos para operacao",
+                                text = "$shortcutCount atalhos prontos para operacao",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = AppColors.TopBarOnBlue
                             )
                             Text(
-                                text = "A identidade visual segue a familia Nexus e preserva a estrutura do legado RFID.",
+                                text = "Buscar produtos, consultar cadastros e abrir conferencias a partir do menu principal.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppColors.TopBarOnBlue.copy(alpha = 0.72f)
                             )
@@ -184,12 +188,40 @@ fun DrawerMenu(
                         verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
                     ) {
                         primaryItems.forEach { item ->
+                            val childSelected = item.children.any { child -> child.route == selectedRoute }
+                            val expanded = expandedGroups[item.route] ?: childSelected
+
                             DrawerMenuRow(
                                 item = item,
                                 supportingText = supportTextFor(item.route),
-                                selected = item.route == selectedRoute,
-                                onClick = { onItemClick(item) }
+                                selected = childSelected || item.route == selectedRoute,
+                                onClick = {
+                                    if (item.children.isEmpty()) {
+                                        onItemClick(item)
+                                    } else {
+                                        expandedGroups[item.route] = !expanded
+                                    }
+                                },
+                                expandable = item.children.isNotEmpty(),
+                                expanded = expanded
                             )
+
+                            if (item.children.isNotEmpty() && expanded) {
+                                Column(
+                                    modifier = Modifier.padding(start = AppSpacing.lg),
+                                    verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+                                ) {
+                                    item.children.forEach { child ->
+                                        DrawerMenuRow(
+                                            item = child,
+                                            supportingText = supportTextFor(child.route),
+                                            selected = child.route == selectedRoute,
+                                            onClick = { onItemClick(child) },
+                                            nested = true
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -224,21 +256,28 @@ private fun DrawerMenuRow(
     supportingText: String,
     selected: Boolean,
     onClick: () -> Unit,
-    exitAction: Boolean = false
+    exitAction: Boolean = false,
+    expandable: Boolean = false,
+    expanded: Boolean = false,
+    nested: Boolean = false
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = if (selected) AppColors.AccentSurface else AppColors.CardSurface,
+                color = when {
+                    selected -> AppColors.AccentSurface
+                    nested -> AppColors.FieldBackground
+                    else -> AppColors.CardSurface
+                },
                 shape = AppShapes.card
             )
             .border(
                 width = 1.dp,
-                color = if (selected) {
-                    AppColors.BrandSignalBlue.copy(alpha = 0.34f)
-                } else {
-                    AppColors.Divider
+                color = when {
+                    selected -> AppColors.BrandSignalBlue.copy(alpha = 0.34f)
+                    nested -> AppColors.AccentBorder
+                    else -> AppColors.Divider
                 },
                 shape = AppShapes.card
             )
@@ -248,13 +287,20 @@ private fun DrawerMenuRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(end = if (selected) 56.dp else if (!exitAction) 44.dp else 0.dp),
+                .padding(
+                    end = when {
+                        expandable -> 34.dp
+                        selected -> 56.dp
+                        !exitAction -> 44.dp
+                        else -> 0.dp
+                    }
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppSpacing.md)
         ) {
             Box(
                 modifier = Modifier
-                    .size(38.dp)
+                    .size(if (nested) 34.dp else 38.dp)
                     .background(
                         color = if (selected) AppColors.HeroSurface else AppColors.FieldBackground,
                         shape = AppShapes.input
@@ -276,7 +322,7 @@ private fun DrawerMenuRow(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = item.label,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (nested) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                     color = if (selected) AppColors.TopBarBlue else AppColors.TextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -291,38 +337,59 @@ private fun DrawerMenuRow(
             }
         }
 
-        if (selected) {
-            Text(
-                text = "Ativo",
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .background(
-                        color = AppColors.PrimaryActionBlue.copy(alpha = 0.12f),
-                        shape = AppShapes.button
+        when {
+            expandable -> {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(34.dp)
+                        .background(AppColors.FieldBackground, AppShapes.input)
+                        .border(1.dp, AppColors.Divider, AppShapes.input),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                        contentDescription = null,
+                        tint = AppColors.TextSecondary
                     )
-                    .border(
-                        width = 1.dp,
-                        color = AppColors.BrandSignalBlue.copy(alpha = 0.24f),
-                        shape = AppShapes.button
-                    )
-                    .padding(horizontal = AppSpacing.sm, vertical = AppSpacing.xxs),
-                style = MaterialTheme.typography.bodySmall,
-                color = AppColors.PrimaryActionBlue
-            )
-        } else if (!exitAction) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .size(34.dp)
-                    .background(AppColors.FieldBackground, AppShapes.input)
-                    .border(1.dp, AppColors.Divider, AppShapes.input),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                    contentDescription = null,
-                    tint = AppColors.TextSecondary
+                }
+            }
+
+            selected -> {
+                Text(
+                    text = "Ativo",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .background(
+                            color = AppColors.PrimaryActionBlue.copy(alpha = 0.12f),
+                            shape = AppShapes.button
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = AppColors.BrandSignalBlue.copy(alpha = 0.24f),
+                            shape = AppShapes.button
+                        )
+                        .padding(horizontal = AppSpacing.sm, vertical = AppSpacing.xxs),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.PrimaryActionBlue
                 )
+            }
+
+            !exitAction -> {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(34.dp)
+                        .background(AppColors.FieldBackground, AppShapes.input)
+                        .border(1.dp, AppColors.Divider, AppShapes.input),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                        contentDescription = null,
+                        tint = AppColors.TextSecondary
+                    )
+                }
             }
         }
     }
@@ -330,10 +397,9 @@ private fun DrawerMenuRow(
 
 private fun iconFor(route: String): ImageVector {
     return when (route) {
-        "inventory" -> Icons.Outlined.Inventory2
         "products" -> Icons.Outlined.Sell
         "global_search" -> Icons.Outlined.Search
-        "associate_tags" -> Icons.Outlined.Sell
+        "conferences" -> Icons.Outlined.Description
         "invoice" -> Icons.Outlined.Description
         "movement" -> Icons.Outlined.SyncAlt
         "settings" -> Icons.Outlined.Settings
@@ -344,12 +410,11 @@ private fun iconFor(route: String): ImageVector {
 
 private fun supportTextFor(route: String): String {
     return when (route) {
-        "inventory" -> "Listas, contagens e leitura ativa"
         "products" -> "Consulta individual de itens"
         "global_search" -> "Busca operacional e rastreio"
-        "associate_tags" -> "Associacao de produto com RFID"
-        "invoice" -> "Conferencia fiscal e validacao"
-        "movement" -> "Fluxo de estoque com envio"
+        "conferences" -> "Expandir nota fiscal e movimentacao"
+        "invoice" -> "Conferencia fiscal do recebimento"
+        "movement" -> "Conferencia de movimentacao do estoque"
         "settings" -> "Parametros e configuracoes"
         "login" -> "Encerrar sessao atual"
         else -> "Fluxo disponivel nesta sessao"

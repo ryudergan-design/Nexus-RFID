@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
@@ -59,17 +58,13 @@ fun NexusRfidBrandMark(
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier.size(76.dp)) {
-        val radius = 22.dp.toPx()
         val stroke = Stroke(
             width = size.width * 0.11f,
             cap = StrokeCap.Round,
             join = StrokeJoin.Round
         )
 
-        drawRoundRect(
-            color = AppColors.BrandMarkSurface,
-            cornerRadius = CornerRadius(radius, radius)
-        )
+        drawRect(color = AppColors.BrandMarkSurface)
 
         val path = Path().apply {
             moveTo(size.width * 0.24f, size.height * 0.76f)

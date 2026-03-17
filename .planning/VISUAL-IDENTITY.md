@@ -87,10 +87,10 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 
 ### Formas
 
-- Inputs: arredondamento medio
-- Cards: arredondamento medio
-- Botoes: arredondamento medio para alto
-- Modais: arredondamento mais evidente, sem exagero
+- Inputs: quadrados
+- Cards: quadrados
+- Botoes: quadrados
+- Modais: quadrados
 
 ### Tipografia
 
@@ -149,6 +149,9 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - Sem efeitos pesados
 - O topo do drawer pode carregar um bloco escuro com status da sessao e versao
 - O item selecionado deve ficar evidente com destaque suave, nunca com glow
+- O menu inicial deve priorizar: `Buscar Produtos`, `Produtos`, `Conferencias`, `Configuracoes` e `Sair`
+- `Conferencias` deve expandir `Nota Fiscal` e `Movimentacao de Estoque`
+- `Associar Tag` sai do menu inicial
 
 ### Cards de inventario
 
