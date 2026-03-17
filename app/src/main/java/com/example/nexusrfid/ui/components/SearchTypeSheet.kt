@@ -21,6 +21,13 @@ import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
 
+import androidx.compose.ui.window.Dialog
+import androidx.compose.foundation.border
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+
 @Composable
 fun SearchTypeSheet(
     options: List<SearchTypeOption>,
@@ -28,38 +35,48 @@ fun SearchTypeSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.20f))
-                .clickable(onClick = onDismiss)
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(AppColors.CardSurface, AppShapes.modal)
-                .padding(vertical = AppSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(0.dp)
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
+            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.BrandSignalBlue.copy(alpha = 0.44f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Text(
-                text = "Voce deseja buscar pelo que?",
-                modifier = Modifier.padding(horizontal = AppSpacing.lg),
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.TextPrimary
-            )
-            HorizontalDivider(color = AppColors.Divider, modifier = Modifier.padding(top = AppSpacing.sm))
-            options.forEachIndexed { index, option ->
-                SearchTypeRow(
-                    option = option,
-                    onClick = { onSelect(option) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            ) {
+                Text(
+                    text = "SELECIONE O ALVO",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AppSpacing.lg),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AppColors.BrandSignalBlue,
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.2.sp
                 )
-                if (index != options.lastIndex) {
-                    HorizontalDivider(color = AppColors.Divider)
+                
+                HorizontalDivider(
+                    color = AppColors.Divider, 
+                    modifier = Modifier.padding(vertical = AppSpacing.sm, horizontal = AppSpacing.lg)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AppSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+                ) {
+                    options.forEach { option ->
+                        SearchTypeRow(
+                            option = option,
+                            onClick = { onSelect(option) }
+                        )
+                    }
                 }
             }
         }
@@ -74,15 +91,17 @@ private fun SearchTypeRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .background(color = AppColors.CardSurfaceHighlight, shape = AppShapes.button)
+            .border(0.5.dp, AppColors.Divider, AppShapes.button)
             .clickable(onClick = onClick)
-            .background(color = AppColors.CardSurface)
-            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm)
+            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md)
     ) {
         Text(
-            text = option.label,
-            modifier = Modifier.align(Alignment.CenterStart),
-            style = MaterialTheme.typography.bodyMedium,
-            color = AppColors.TopBarBlue
+            text = option.label.uppercase(),
+            modifier = Modifier.align(Alignment.Center),
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+            color = AppColors.TopBarOnBlue,
+            textAlign = TextAlign.Center
         )
     }
 }

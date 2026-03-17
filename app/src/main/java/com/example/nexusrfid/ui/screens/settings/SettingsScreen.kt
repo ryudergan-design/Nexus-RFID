@@ -586,9 +586,9 @@ private fun DevicePickerDialog(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = AppShapes.modal,
-            colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-            border = BorderStroke(1.dp, AppColors.Divider),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
+            border = BorderStroke(1.dp, AppColors.BrandSignalBlue.copy(alpha = 0.44f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(
                 modifier = Modifier
@@ -597,30 +597,38 @@ private fun DevicePickerDialog(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
             ) {
                 Text(
-                    text = "Leitores Bluetooth",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = AppColors.TextPrimary
+                    text = "LEITORES BLUETOOTH",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AppColors.BrandSignalBlue
                 )
                 Text(
                     text = if (isSearching) {
-                        "Buscando leitores ativos..."
+                        "Buscando leitores ativos no ambiente..."
                     } else {
-                        "Selecione um leitor ativo para conectar."
+                        "Selecione um leitor disponivel para conexao."
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = AppColors.TextSecondary
                 )
 
                 if (devices.isEmpty()) {
-                    Text(
-                        text = if (isSearching) {
-                            "Aguarde a busca concluir."
-                        } else {
-                            "Nenhum leitor ativo encontrado."
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TextSecondary
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = AppSpacing.xl),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isSearching) {
+                                "Sincronizando frequencias..."
+                            } else {
+                                "Nenhum leitor detectado."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextSecondary,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -639,10 +647,11 @@ private fun DevicePickerDialog(
                 }
 
                 ActionButtonOutline(
-                    text = "Fechar",
+                    text = "FECHAR",
                     onClick = onDismiss,
                     borderColor = AppColors.Divider,
-                    containerColor = AppColors.FieldBackground
+                    containerColor = AppColors.CardSurfaceHighlight,
+                    contentColor = AppColors.TopBarOnBlue
                 )
             }
         }
@@ -655,13 +664,13 @@ private fun DeviceRow(
     selected: Boolean,
     onSelect: () -> Unit
 ) {
-    val borderColor = if (selected) AppColors.PositiveBorder else AppColors.Divider
-    val backgroundColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground
+    val borderColor = if (selected) AppColors.BrandSignalBlue else AppColors.Divider
+    val backgroundColor = if (selected) AppColors.BrandSignalBlue.copy(alpha = 0.12f) else AppColors.CardSurfaceHighlight
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, borderColor, AppShapes.card)
+            .border(0.5.dp, borderColor, AppShapes.card)
             .background(backgroundColor, AppShapes.card)
             .clickable(enabled = !selected, onClick = onSelect)
             .padding(AppSpacing.md),
@@ -670,14 +679,15 @@ private fun DeviceRow(
     ) {
         Box(
             modifier = Modifier
-                .background(AppColors.TopBarBlue.copy(alpha = 0.08f), CircleShape)
+                .background(AppColors.CardSurface, CircleShape)
+                .border(0.5.dp, AppColors.Divider, CircleShape)
                 .padding(AppSpacing.sm),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Outlined.Devices,
                 contentDescription = null,
-                tint = AppColors.TopBarBlue
+                tint = if (selected) AppColors.BrandSignalBlue else AppColors.TextSecondary
             )
         }
 
@@ -686,9 +696,9 @@ private fun DeviceRow(
             verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
         ) {
             Text(
-                text = device.displayName,
+                text = device.displayName.uppercase(),
                 style = MaterialTheme.typography.titleSmall,
-                color = AppColors.TextPrimary
+                color = AppColors.TopBarOnBlue
             )
             Text(
                 text = device.address,
@@ -699,15 +709,15 @@ private fun DeviceRow(
 
         if (selected) {
             StatusPill(
-                text = "Selecionado",
+                text = "CONECTADO",
                 background = AppColors.PositiveGreen.copy(alpha = 0.16f),
                 contentColor = AppColors.PositiveGreen
             )
         } else {
             Text(
-                text = "Selecionar",
-                style = MaterialTheme.typography.labelLarge,
-                color = AppColors.TopBarBlue
+                text = "CONECTAR",
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                color = AppColors.BrandSignalBlue
             )
         }
     }

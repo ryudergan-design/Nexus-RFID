@@ -4,10 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,10 +26,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
@@ -45,8 +50,8 @@ fun SearchHeader(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.AccentSurface),
-        border = BorderStroke(1.dp, AppColors.AccentBorder),
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+        border = BorderStroke(1.dp, AppColors.Divider),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -74,17 +79,18 @@ fun SearchHeader(
                     Text(
                         text = "Pesquisar produto",
                         style = MaterialTheme.typography.titleMedium,
-                        color = AppColors.TextPrimary
+                        color = AppColors.TopBarOnBlue
                     )
                 }
 
                 Badge(
-                    containerColor = AppColors.TopBarBlue.copy(alpha = 0.10f),
-                    contentColor = AppColors.TopBarBlue
+                    containerColor = AppColors.BrandSignalBlue.copy(alpha = 0.14f),
+                    contentColor = AppColors.BrandSignalBlue
                 ) {
                     Text(
                         text = "CATALOGO",
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp)
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
                 }
             }
@@ -99,7 +105,7 @@ fun SearchHeader(
                         bottom = AppSpacing.lg
                     )
             ) {
-                val buttonWidth = 116.dp
+                val buttonWidth = 120.dp
                 val fieldWidth = maxWidth - buttonWidth - AppSpacing.sm
 
                 Row(
@@ -138,11 +144,11 @@ fun SearchHeader(
                             errorContainerColor = AppColors.FieldBackground,
                             focusedBorderColor = AppColors.BrandSignalBlue.copy(alpha = 0.44f),
                             unfocusedBorderColor = AppColors.Divider,
-                            cursorColor = AppColors.PrimaryActionBlue,
+                            cursorColor = AppColors.BrandSignalBlue,
                             focusedLeadingIconColor = AppColors.TextSecondary,
                             unfocusedLeadingIconColor = AppColors.TextSecondary,
-                            focusedTextColor = AppColors.TextPrimary,
-                            unfocusedTextColor = AppColors.TextPrimary
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
                         )
                     )
 
@@ -152,28 +158,33 @@ fun SearchHeader(
                             .width(buttonWidth)
                             .height(52.dp),
                         shape = AppShapes.button,
+                        contentPadding = PaddingValues(horizontal = 4.dp),
                         elevation = ButtonDefaults.buttonElevation(
                             defaultElevation = 0.dp,
                             pressedElevation = 0.dp
                         ),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AppColors.PrimaryActionBlue,
-                            contentColor = AppColors.TopBarOnBlue
+                            contentColor = Color.White
                         )
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.Search,
-                                contentDescription = null
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = buttonLabel,
+                                text = buttonLabel.uppercase(),
                                 style = MaterialTheme.typography.labelLarge.copy(
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     letterSpacing = 0.sp
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Clip
                             )
                         }
                     }

@@ -28,9 +28,18 @@ data class RfidDevice(
     val bonded: Boolean = false
 ) {
     val displayName: String
-        get() = name.ifBlank {
-            val suffix = address.takeLast(8).ifBlank { "pareado" }
-            "Coletor $suffix"
+        get() {
+            val upperName = name.uppercase()
+            return when {
+                upperName.contains("R6") -> "LEITOR R6"
+                upperName.contains("C72") -> "COLETOR C72"
+                upperName.contains("NEXUS") -> "LEITOR NEXUS"
+                name.isNotBlank() -> name.uppercase()
+                else -> {
+                    val suffix = address.replace(":", "").takeLast(4)
+                    "COLETOR $suffix"
+                }
+            }
         }
 }
 
