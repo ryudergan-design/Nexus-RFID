@@ -931,23 +931,27 @@ private fun LegacyActionRow(
             label = "Iniciar",
             icon = Icons.Outlined.PlayArrow,
             onClick = onStart,
-            active = readingActive
+            active = readingActive,
+            modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
             label = "Parar",
             icon = Icons.Outlined.Stop,
-            onClick = onStop
+            onClick = onStop,
+            modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
             label = "Potencia",
             icon = Icons.Outlined.Wifi,
-            onClick = onPowerClick
+            onClick = onPowerClick,
+            modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
             label = "Som",
             icon = if (soundEnabled) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
             onClick = onSoundClick,
-            active = soundEnabled
+            active = soundEnabled,
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -963,7 +967,6 @@ private fun LegacyActionButton(
     val tint = if (active) AppColors.TopBarBlue else AppColors.TextSecondary
     Column(
         modifier = modifier
-            .weight(1f)
             .clickable(onClick = onClick)
             .padding(vertical = AppSpacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
