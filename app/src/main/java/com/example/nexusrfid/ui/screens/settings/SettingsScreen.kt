@@ -6,17 +6,27 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BluetoothConnected
+import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.LinkOff
+import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -27,8 +37,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.rfid.CollectorModel
 import com.example.nexusrfid.rfid.RfidConnectionState
@@ -57,7 +69,7 @@ fun SettingsScreen(
         if (RfidPermissionGateway.isBluetoothEnabled(context)) {
             appState.startR6Discovery()
         } else {
-            appState.reportError("Ative o Bluetooth para conectar o R6.")
+            appState.reportError("Ative o Bluetooth para carregar os coletores pareados.")
         }
     }
 
@@ -71,7 +83,7 @@ fun SettingsScreen(
                 enableBluetoothLauncher.launch(RfidPermissionGateway.bluetoothEnableIntent())
             }
         } else {
-            appState.reportError("Permita o Bluetooth para procurar o R6.")
+            appState.reportError("Permita o Bluetooth para acessar os coletores pareados.")
         }
     }
 
@@ -129,13 +141,20 @@ fun SettingsScreenPreviewContent(
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val r6Ready = selectedCollectorModel == CollectorModel.R6
+    val actionLabel = when {
+        isSearchingDevices -> "Carregando lista"
+        availableDevices.isEmpty() -> "Mostrar pareados"
+        else -> "Atualizar lista"
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AppColors.ScreenBackground,
         topBar = {
             AppTopBar(
                 title = "Configuracoes",
-                eyebrow = null,
+                eyebrow = "Nexus RFID",
                 onNavigationClick = onMenuClick
             )
         }
@@ -146,22 +165,36 @@ fun SettingsScreenPreviewContent(
                 .background(AppColors.ScreenBackground)
                 .padding(innerPadding),
             contentPadding = PaddingValues(AppSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
         ) {
             item {
-                SettingsCard(title = "Coletor") {
+                SettingsHeroCard(
+                    selectedCollectorModel = selectedCollectorModel,
+                    connectionState = connectionState,
+                    statusMessage = statusMessage,
+                    connectedDevice = connectedDevice
+                )
+            }
+
+            item {
+                SettingsSectionCard(
+                    eyebrow = "COLETOR",
+                    title = "Modelo em uso"
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
                     ) {
                         CollectorOptionButton(
                             label = "C72",
+                            icon = Icons.Outlined.Memory,
                             selected = selectedCollectorModel == CollectorModel.C72,
                             modifier = Modifier.weight(1f),
                             onClick = { onCollectorModelSelected(CollectorModel.C72) }
                         )
                         CollectorOptionButton(
                             label = "R6",
+                            icon = Icons.Outlined.BluetoothConnected,
                             selected = selectedCollectorModel == CollectorModel.R6,
                             modifier = Modifier.weight(1f),
                             onClick = { onCollectorModelSelected(CollectorModel.R6) }
@@ -171,28 +204,10 @@ fun SettingsScreenPreviewContent(
             }
 
             item {
-                SettingsCard(title = "Status") {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
-                    ) {
-                        Text(
-                            text = statusMessage,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AppColors.TextPrimary
-                        )
-                        if (connectedDevice != null) {
-                            Text(
-                                text = "${connectedDevice.displayName}  |  ${connectedDevice.address}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextSecondary
-                            )
-                        }
-                    }
-                }
-            }
-
-            item {
-                SettingsCard(title = "Som de deteccao") {
+                SettingsSectionCard(
+                    eyebrow = "ALERTA",
+                    title = "Som de proximidade"
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -202,17 +217,32 @@ fun SettingsScreenPreviewContent(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
                         ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (soundEnabled) {
+                                        Icons.Outlined.NotificationsActive
+                                    } else {
+                                        Icons.Outlined.NotificationsOff
+                                    },
+                                    contentDescription = null,
+                                    tint = AppColors.TopBarBlue
+                                )
+                                Text(
+                                    text = if (soundEnabled) "Alerta ativo" else "Alerta silencioso",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = AppColors.TextPrimary
+                                )
+                            }
                             Text(
-                                text = if (soundEnabled) "Som ligado" else "Som desligado",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = AppColors.TextPrimary
-                            )
-                            Text(
-                                text = "Use o alarme sonoro so quando ele ajudar na localizacao.",
+                                text = "Desligue o som quando a busca precisar ser discreta.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppColors.TextSecondary
                             )
                         }
+
                         Switch(
                             checked = soundEnabled,
                             onCheckedChange = onSoundChange,
@@ -227,47 +257,59 @@ fun SettingsScreenPreviewContent(
                 }
             }
 
-            if (selectedCollectorModel == CollectorModel.R6) {
+            if (r6Ready) {
                 item {
-                    SettingsCard(title = "Bluetooth do R6") {
-                        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
-                            when {
-                                connectionState == RfidConnectionState.Connected -> {
-                                    ActionButtonOutline(
-                                        text = "Desconectar coletor",
-                                        onClick = onDisconnect,
-                                        borderColor = AppColors.Divider,
-                                        containerColor = AppColors.FieldBackground
-                                    )
-                                }
+                    SettingsSectionCard(
+                        eyebrow = "BLUETOOTH",
+                        title = "Coletores pareados"
+                    ) {
+                        Text(
+                            text = "O app lista somente dispositivos ja pareados no Android. Assim a escolha fica mais segura e direta.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppColors.TextSecondary
+                        )
 
-                                isSearchingDevices -> {
-                                    ActionButtonPrimary(
-                                        text = "Parar busca",
-                                        onClick = onStopDeviceScan
-                                    )
-                                }
-
-                                else -> {
-                                    ActionButtonPrimary(
-                                        text = "Procurar coletor",
-                                        onClick = onStartR6Flow
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = "Fluxo plug and play: escolha o R6, permita o Bluetooth e selecione o coletor.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextSecondary
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                        ) {
+                            ActionButtonPrimary(
+                                text = actionLabel,
+                                onClick = if (isSearchingDevices) onStopDeviceScan else onStartR6Flow,
+                                modifier = Modifier.weight(1f),
+                                enabled = !isSearchingDevices
                             )
+
+                            if (connectionState == RfidConnectionState.Connected) {
+                                ActionButtonOutline(
+                                    text = "Desconectar",
+                                    onClick = onDisconnect,
+                                    modifier = Modifier.weight(1f),
+                                    borderColor = AppColors.Divider,
+                                    containerColor = AppColors.FieldBackground
+                                )
+                            }
                         }
                     }
                 }
 
-                if (availableDevices.isNotEmpty()) {
-                    item {
-                        SettingsCard(title = "Coletores encontrados") {
+                item {
+                    if (availableDevices.isEmpty()) {
+                        SettingsSectionCard(
+                            eyebrow = "AGUARDANDO",
+                            title = "Nenhum coletor pronto"
+                        ) {
+                            Text(
+                                text = "Pareie o R6 nas configuracoes do Android e volte aqui para conectar.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppColors.TextSecondary
+                            )
+                        }
+                    } else {
+                        SettingsSectionCard(
+                            eyebrow = "${availableDevices.size} PAREADO(S)",
+                            title = "Lista de conexao"
+                        ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
@@ -285,9 +327,12 @@ fun SettingsScreenPreviewContent(
                 }
             } else {
                 item {
-                    SettingsCard(title = "C72") {
+                    SettingsSectionCard(
+                        eyebrow = "C72",
+                        title = "Fluxo fisico"
+                    ) {
                         Text(
-                            text = "Nesta etapa, o C72 fica apenas preparado no fluxo. A conexao fisica entra depois.",
+                            text = "O C72 continua plug and play, mas a conexao fisica sera tratada na etapa especifica dele.",
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary
                         )
@@ -297,33 +342,10 @@ fun SettingsScreenPreviewContent(
 
             if (!errorMessage.isNullOrBlank()) {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = AppShapes.card,
-                        colors = CardDefaults.cardColors(containerColor = AppColors.DangerSoft),
-                        border = BorderStroke(1.dp, AppColors.Divider),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(AppSpacing.md),
-                            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                        ) {
-                            Text(
-                                text = errorMessage,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextPrimary
-                            )
-                            ActionButtonOutline(
-                                text = "Fechar aviso",
-                                onClick = onDismissError,
-                                borderColor = AppColors.Divider,
-                                containerColor = AppColors.CardSurface,
-                                contentColor = AppColors.TextPrimary
-                            )
-                        }
-                    }
+                    ErrorCard(
+                        message = errorMessage,
+                        onDismissError = onDismissError
+                    )
                 }
             }
         }
@@ -331,15 +353,17 @@ fun SettingsScreenPreviewContent(
 }
 
 @Composable
-private fun SettingsCard(
-    title: String,
-    content: @Composable () -> Unit
+private fun SettingsHeroCard(
+    selectedCollectorModel: CollectorModel,
+    connectionState: RfidConnectionState,
+    statusMessage: String,
+    connectedDevice: RfidDevice?
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
+        colors = CardDefaults.cardColors(containerColor = AppColors.TopBarBlue),
+        border = BorderStroke(1.dp, AppColors.TopBarOnBlue.copy(alpha = 0.08f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -348,11 +372,113 @@ private fun SettingsCard(
                 .padding(AppSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                    Text(
+                        text = "OPERACAO DO COLETOR",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                        color = AppColors.BrandSignalBlue
+                    )
+                    Text(
+                        text = if (selectedCollectorModel == CollectorModel.R6) {
+                            "Conexao pronta para o R6"
+                        } else {
+                            "C72 selecionado"
+                        },
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = AppColors.TopBarOnBlue
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .background(AppColors.TopBarOnBlue.copy(alpha = 0.08f), CircleShape)
+                        .padding(AppSpacing.sm),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (selectedCollectorModel == CollectorModel.R6) {
+                            Icons.Outlined.BluetoothConnected
+                        } else {
+                            Icons.Outlined.Memory
+                        },
+                        contentDescription = null,
+                        tint = AppColors.TopBarOnBlue
+                    )
+                }
+            }
+
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                color = AppColors.TextPrimary
+                text = statusMessage,
+                style = MaterialTheme.typography.bodyMedium,
+                color = AppColors.TopBarOnBlue.copy(alpha = 0.84f)
             )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            ) {
+                StatusPill(
+                    text = selectedCollectorModel.label,
+                    background = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
+                    contentColor = AppColors.TopBarOnBlue
+                )
+                StatusPill(
+                    text = when (connectionState) {
+                        RfidConnectionState.Connected -> "Conectado"
+                        RfidConnectionState.Connecting -> "Conectando"
+                        else -> "Pronto"
+                    },
+                    background = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
+                    contentColor = AppColors.TopBarOnBlue
+                )
+                if (connectedDevice != null) {
+                    StatusPill(
+                        text = connectedDevice.displayName,
+                        background = AppColors.TopBarOnBlue.copy(alpha = 0.10f),
+                        contentColor = AppColors.TopBarOnBlue
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSectionCard(
+    eyebrow: String,
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.card,
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                Text(
+                    text = eyebrow,
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = AppColors.TextPrimary
+                )
+            }
             content()
         }
     }
@@ -361,6 +487,7 @@ private fun SettingsCard(
 @Composable
 private fun CollectorOptionButton(
     label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     selected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
@@ -371,14 +498,24 @@ private fun CollectorOptionButton(
         shape = AppShapes.button,
         border = BorderStroke(
             1.dp,
-            if (selected) AppColors.BrandSignalBlue.copy(alpha = 0.42f) else AppColors.Divider
+            if (selected) AppColors.PrimaryActionBlue else AppColors.Divider
         ),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground,
             contentColor = if (selected) AppColors.TopBarBlue else AppColors.TextPrimary
         )
     ) {
-        Text(text = label)
+        Column(
+            modifier = Modifier.padding(vertical = AppSpacing.xs),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
     }
 }
 
@@ -392,32 +529,57 @@ private fun DeviceRow(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, AppColors.Divider, AppShapes.card)
+            .background(
+                if (connected) AppColors.AccentSurface else AppColors.FieldBackground,
+                AppShapes.card
+            )
             .padding(AppSpacing.md),
         horizontalArrangement = Arrangement.spacedBy(AppSpacing.md),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Box(
+            modifier = Modifier
+                .background(AppColors.TopBarBlue.copy(alpha = 0.08f), CircleShape)
+                .padding(AppSpacing.sm),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Devices,
+                contentDescription = null,
+                tint = AppColors.TopBarBlue
+            )
+        }
+
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
         ) {
             Text(
                 text = device.displayName,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = AppColors.TextPrimary
             )
             Text(
-                text = buildString {
-                    append(device.address)
-                    if (device.rssi != null) {
-                        append("  |  RSSI ${device.rssi}")
-                    }
-                    if (device.bonded) {
-                        append("  |  pareado")
-                    }
-                },
-                style = MaterialTheme.typography.bodySmall,
+                text = device.address,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                 color = AppColors.TextSecondary
             )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+            ) {
+                StatusPill(
+                    text = "Pareado",
+                    background = AppColors.TopBarBlue.copy(alpha = 0.08f),
+                    contentColor = AppColors.TopBarBlue
+                )
+                if (connected) {
+                    StatusPill(
+                        text = "Conectado",
+                        background = AppColors.PositiveGreen.copy(alpha = 0.14f),
+                        contentColor = AppColors.PositiveGreen
+                    )
+                }
+            }
         }
 
         Button(
@@ -434,7 +596,75 @@ private fun DeviceRow(
                 disabledElevation = 0.dp
             )
         ) {
-            Text(if (connected) "Conectado" else "Conectar")
+            Text(if (connected) "Ativo" else "Conectar")
+        }
+    }
+}
+
+@Composable
+private fun StatusPill(
+    text: String,
+    background: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color
+) {
+    Box(
+        modifier = Modifier
+            .background(background, CircleShape)
+            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+            color = contentColor
+        )
+    }
+}
+
+@Composable
+private fun ErrorCard(
+    message: String,
+    onDismissError: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.card,
+        colors = CardDefaults.cardColors(containerColor = AppColors.DangerSoft),
+        border = BorderStroke(1.dp, AppColors.Divider),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.LinkOff,
+                    contentDescription = null,
+                    tint = AppColors.TextPrimary
+                )
+                Text(
+                    text = "Aviso de conexao",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AppColors.TextPrimary
+                )
+            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextPrimary
+            )
+            ActionButtonOutline(
+                text = "Fechar aviso",
+                onClick = onDismissError,
+                borderColor = AppColors.Divider,
+                containerColor = AppColors.CardSurface,
+                contentColor = AppColors.TextPrimary
+            )
         }
     }
 }

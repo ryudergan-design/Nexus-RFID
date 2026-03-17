@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 Phase: 4 of 8 (Busca de produto e associacao)
 Plan: 0 of 2 in current phase
 Status: Phase 4 continua como foco atual; Phase 4.5 foi concluida fora da ordem principal para antecipar o primeiro teste real do R6
-Last activity: 2026-03-17 - Fase 4.5 executada com busca RFID multi-tag, `Configuracoes` minima, screenshots e APK debug
+Last activity: 2026-03-17 - Ajuste visual e operacional do R6 com lista apenas de pareados, repaginacao de `Produtos`, `Buscar Produtos` e `Configuracoes`, screenshots e APK debug atualizados
 
 Progress: [#####-----] 50%
 
@@ -76,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 4.5]: `Buscar Produtos` passou a aceitar varias tags/EPCs de 24 caracteres, com `Iniciar`, `Parar`, potencia `1..30`, alerta sonoro opcional e indicador de proximidade.
 - [Phase 4.5]: `Configuracoes` deixou de ser placeholder e virou a tela minima plug and play para escolha entre `C72` e `R6`, com descoberta Bluetooth apenas para o `R6`.
 - [Phase 4.5]: A validacao visual da fase passou por `updateDebugScreenshotTest` e exigiu caminhos curtos no Windows para contornar `CreateProcess error=206`.
+- [Global]: A lista de dispositivos do `R6` passa a mostrar apenas coletores ja pareados no Android.
+- [Global]: `Produtos`, `Buscar Produtos` e `Configuracoes` receberam repaginacao para aumentar presenca visual, aproximar a hierarquia do `Nexus Service Desk` e reduzir valores fixos ou textos genericos nas telas operacionais.
 
 ### Roadmap Evolution
 

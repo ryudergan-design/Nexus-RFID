@@ -97,6 +97,9 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - Titulos principais com peso firme
 - Labels de acao com leve espacamento entre letras
 - Corpo com leitura objetiva e alta legibilidade
+- Telas operacionais devem usar tipografia mais presente e menos generica, inspirada na hierarquia do `Nexus Service Desk`
+- Labels curtas em caixa alta podem ser usadas para secoes, modulos e estados operacionais
+- Valores tecnicos como EPC, MAC e potencia podem usar visual mais denso ou monoespacado para leitura rapida
 
 ### Texto e copy
 
@@ -179,6 +182,15 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - Dialogos e bottom sheets devem parecer parte da familia Nexus, nao do app legado bruto
 - Modais escuros continuam permitidos quando fizer sentido tecnico, mas alinhados ao azul-grafite Nexus
 
+### Busca RFID e configuracoes
+
+- `Buscar Produtos` no modo `Tag` deve parecer uma tela operacional final, com acoes claras, icones visiveis e sem textos de placeholder tecnico
+- A barra principal da busca deve priorizar `Iniciar`, `Parar`, `Tipo` e `Limpar`, com destaque visual consistente
+- A acao `Adicionar tag` deve ser explicita e abrir popup para digitacao manual do EPC
+- A tela nao deve exibir valores fixos de exemplo como se fossem retorno real da busca
+- `Configuracoes` do `R6` deve listar apenas dispositivos ja pareados no Android, reduzindo erro operacional e evitando nomes estranhos no fluxo principal
+- `Produtos`, `Buscar Produtos` e `Configuracoes` devem reaproveitar a hierarquia visual do `Nexus Service Desk` em versao light: secoes fortes, espacamento melhor distribuido e cards mais firmes
+
 ## O que evitar
 
 - Roxo como cor principal
@@ -219,3 +231,4 @@ O app deve parecer parte do ecossistema Nexus, mas sem perder a objetividade ope
 - As telas ativas devem ficar mais proximas das fotos de referencia, mesmo quando isso significar reduzir elementos de apoio da identidade Nexus.
 - Drawer, Departamentos, Inventario, Produtos e Buscar Produtos passaram a priorizar leitura operacional direta.
 - Blocos explicativos como cabecalhos descritivos e cards de contexto devem ser evitados nessas telas.
+- Em telas de operacao direta, a densidade do legado continua mandando na distribuicao dos blocos, enquanto a familia Nexus entra na paleta, na tipografia e na presenca geral.

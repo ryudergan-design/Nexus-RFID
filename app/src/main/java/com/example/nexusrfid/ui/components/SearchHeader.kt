@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
@@ -43,27 +45,48 @@ fun SearchHeader(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
+        colors = CardDefaults.cardColors(containerColor = AppColors.AccentSurface),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
         ) {
-            if (!sectionTitle.isNullOrBlank()) {
-                Text(
-                    text = sectionTitle,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = AppSpacing.lg,
-                            end = AppSpacing.lg,
-                            top = AppSpacing.lg
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = AppSpacing.lg,
+                        end = AppSpacing.lg,
+                        top = AppSpacing.lg
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                    Text(
+                        text = (sectionTitle ?: "Consulta de produtos").uppercase(),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = 11.sp
                         ),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = AppColors.TextPrimary
-                )
+                        color = AppColors.TextSecondary
+                    )
+                    Text(
+                        text = "Pesquisar produto",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AppColors.TextPrimary
+                    )
+                }
+
+                Badge(
+                    containerColor = AppColors.TopBarBlue.copy(alpha = 0.10f),
+                    contentColor = AppColors.TopBarBlue
+                ) {
+                    Text(
+                        text = "CATALOGO",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp)
+                    )
+                }
             }
 
             BoxWithConstraints(
@@ -76,7 +99,7 @@ fun SearchHeader(
                         bottom = AppSpacing.lg
                     )
             ) {
-                val buttonWidth = 108.dp
+                val buttonWidth = 116.dp
                 val fieldWidth = maxWidth - buttonWidth - AppSpacing.sm
 
                 Row(
@@ -88,8 +111,8 @@ fun SearchHeader(
                         onValueChange = onValueChange,
                         modifier = Modifier
                             .width(fieldWidth)
-                            .height(48.dp),
-                        textStyle = MaterialTheme.typography.bodyMedium,
+                            .height(52.dp),
+                        textStyle = MaterialTheme.typography.bodyLarge,
                         singleLine = true,
                         placeholder = {
                             Text(
@@ -127,7 +150,7 @@ fun SearchHeader(
                         onClick = onSearchClick,
                         modifier = Modifier
                             .width(buttonWidth)
-                            .height(48.dp),
+                            .height(52.dp),
                         shape = AppShapes.button,
                         elevation = ButtonDefaults.buttonElevation(
                             defaultElevation = 0.dp,
@@ -138,10 +161,21 @@ fun SearchHeader(
                             contentColor = AppColors.TopBarOnBlue
                         )
                     ) {
-                        Text(
-                            text = buttonLabel,
-                            style = MaterialTheme.typography.labelLarge
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = null
+                            )
+                            Text(
+                                text = buttonLabel,
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontSize = 12.sp,
+                                    letterSpacing = 0.sp
+                                )
+                            )
+                        }
                     }
                 }
             }

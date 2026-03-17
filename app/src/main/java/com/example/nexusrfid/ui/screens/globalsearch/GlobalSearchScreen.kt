@@ -18,9 +18,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BluetoothConnected
+import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -35,9 +43,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.data.mock.ProductListItem
 import com.example.nexusrfid.data.mock.ProductTargetState
@@ -296,7 +309,6 @@ fun GlobalSearchScreen(
     GlobalSearchContent(
         products = products,
         searchTargets = searchTargets,
-        searchTypes = searchTypes,
         selectedTarget = selectedTarget,
         selectedTargetKey = selectedTargetKey,
         selectedType = selectedType,
@@ -327,17 +339,15 @@ fun GlobalSearchScreen(
             }
         },
         collectorLabel = appState?.selectedCollectorModel?.label ?: "R6",
-        collectorStatus = appState?.statusMessage ?: "Fluxo visual da busca RFID.",
-        currentValue = if (isTagMode && tagTargets.isNotEmpty()) {
-            "${tagTargets.size} tag(s) adicionada(s)"
-        } else {
-            searchValue
-        },
+        collectorStatus = appState?.statusMessage.orEmpty(),
+        connectedDeviceName = appState?.connectedDevice?.displayName,
         readingActive = rfidSearching,
         powerLevel = appState?.readerPower ?: 15,
         readCount = counterReadCount,
         foundCount = counterFoundCount,
+        tagCount = tagTargets.size,
         searchInput = productInput,
+        searchValue = searchValue,
         onSearchInputChange = { productInput = it },
         onTextSearch = { searchValue = productInput.trim() },
         filteredProducts = filteredProducts,
@@ -386,224 +396,130 @@ fun GlobalSearchScreen(
 }
 
 @Composable
-private fun GlobalSearchContent(
-    products: List<ProductListItem>,
-    searchTargets: List<SearchTargetItem>,
-    searchTypes: List<SearchTypeOption>,
-    selectedTarget: SearchTargetItem,
-    selectedTargetKey: String,
-    selectedType: SearchTypeOption,
+private fun SearchOverviewCard(
+    currentType: String,
     isTagMode: Boolean,
-    onSelectTarget: (String) -> Unit,
-    onMenuClick: () -> Unit,
-    onOpenType: () -> Unit,
-    onStartSearch: () -> Unit,
-    onStopSearch: () -> Unit,
-    onClear: () -> Unit,
-    onAddTag: () -> Unit,
-    onClearTags: () -> Unit,
-    onRemoveTag: (String) -> Unit,
-    onDecreasePower: () -> Unit,
-    onIncreasePower: () -> Unit,
     collectorLabel: String,
     collectorStatus: String,
-    currentValue: String,
+    connectedDeviceName: String?,
     readingActive: Boolean,
     powerLevel: Int,
-    readCount: Int,
-    foundCount: Int,
-    searchInput: String,
-    onSearchInputChange: (String) -> Unit,
-    onTextSearch: () -> Unit,
-    filteredProducts: List<ProductListItem>,
-    matchedProducts: List<ProductListItem>,
-    tagTargets: List<TagTargetItemUi>,
-    leadingTarget: TagTargetItemUi?,
-    errorMessage: String?,
-    modifier: Modifier = Modifier
+    searchValue: String,
+    tagCount: Int,
+    onStartSearch: () -> Unit,
+    onStopSearch: () -> Unit,
+    onOpenType: () -> Unit,
+    onClear: () -> Unit,
+    onDecreasePower: () -> Unit,
+    onIncreasePower: () -> Unit
 ) {
-    val proximityTitle = if (leadingTarget != null && leadingTarget.proximityPercent > 0) {
-        "Tag mais proxima"
+    val headline = if (isTagMode) "Busca RFID operacional" else "Consulta de produtos"
+    val statusLine = when {
+        isTagMode && readingActive -> "Localizacao em andamento"
+        isTagMode && tagCount > 0 -> "$tagCount tag(s) pronta(s) para iniciar"
+        isTagMode -> "Adicione as tags alvo"
+        searchValue.isNotBlank() -> "Ultima busca: $searchValue"
+        else -> "Escolha o tipo e preencha a consulta"
+    }
+
+    val actionTiles = if (isTagMode) {
+        listOf(
+            ActionTileSpec("Iniciar", Icons.Outlined.PlayArrow, onStartSearch, active = readingActive),
+            ActionTileSpec("Parar", Icons.Outlined.Stop, onStopSearch),
+            ActionTileSpec("Tipo", Icons.Outlined.Tune, onOpenType),
+            ActionTileSpec("Limpar", Icons.Outlined.DeleteSweep, onClear)
+        )
     } else {
-        "Sinal RFID"
-    }
-    val proximityPercent = leadingTarget?.proximityPercent ?: 0
-    val proximityLabel = leadingTarget?.proximityLabel ?: if (readingActive) "Aguardando" else "Pronto"
-    val proximitySupportingText = when {
-        leadingTarget != null && leadingTarget.proximityPercent > 0 -> {
-            buildString {
-                append(leadingTarget.epc)
-                if (!leadingTarget.matchedProductName.isNullOrBlank()) {
-                    append("  |  ")
-                    append(leadingTarget.matchedProductName)
-                }
-            }
-        }
-
-        tagTargets.isEmpty() -> "Adicione as tags alvo para iniciar a localizacao."
-        readingActive -> "Aproxime o coletor da area onde a tag pode estar."
-        else -> "Conecte o coletor e toque em Iniciar para acompanhar a proximidade."
+        listOf(
+            ActionTileSpec("Buscar", Icons.Outlined.Search, onStartSearch),
+            ActionTileSpec("Tipo", Icons.Outlined.Tune, onOpenType),
+            ActionTileSpec("Limpar", Icons.Outlined.DeleteSweep, onClear)
+        )
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppColors.ScreenBackground)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.card,
+        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = AppColors.ScreenBackground,
-            topBar = {
-                AppTopBar(
-                    title = "Buscar Produtos",
-                    eyebrow = null,
-                    onNavigationClick = onMenuClick
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppSpacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                Text(
+                    text = "BUSCA",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = headline,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = AppColors.TextPrimary
+                )
+                Text(
+                    text = statusLine,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.TopBarBlue
                 )
             }
-        ) { innerPadding ->
-            LazyColumn(
+
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(AppColors.ScreenBackground)
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(AppSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(AppSpacing.xs)
             ) {
-                item {
-                    SearchActionRow(
-                        currentType = selectedType.label,
-                        currentValue = currentValue,
-                        readingActive = readingActive,
-                        collectorLabel = collectorLabel,
-                        collectorStatus = collectorStatus,
-                        showPowerControl = isTagMode,
-                        powerLevel = powerLevel,
-                        onStartReading = onStartSearch,
-                        onStopReading = onStopSearch,
-                        onOpenType = onOpenType,
-                        onClear = onClear,
-                        onDecreasePower = onDecreasePower,
-                        onIncreasePower = onIncreasePower
-                    )
+                OperationChip(text = currentType)
+                if (collectorLabel.isNotBlank()) {
+                    OperationChip(text = collectorLabel)
                 }
-
-                item {
-                    CounterBar(
-                        readCount = readCount,
-                        foundCount = foundCount
-                    )
+                if (connectedDeviceName != null) {
+                    OperationChip(text = connectedDeviceName, accent = true)
+                } else if (isTagMode) {
+                    OperationChip(text = "Sem coletor")
                 }
-
-                item {
-                    TargetSelector(
-                        targets = searchTargets,
-                        products = products,
-                        selectedKey = selectedTargetKey,
-                        onSelect = onSelectTarget
-                    )
-                }
-
                 if (isTagMode) {
-                    item {
-                        TagCommandCard(
-                            tagCount = tagTargets.size,
-                            onAddTag = onAddTag,
-                            onClearTags = onClearTags
-                        )
-                    }
+                    OperationChip(text = "$tagCount tag(s)")
+                }
+            }
 
-                    if (tagTargets.isNotEmpty()) {
-                        item {
-                            TagTargetList(
-                                items = tagTargets,
-                                onRemove = onRemoveTag
-                            )
-                        }
-                    }
+            Text(
+                text = if (collectorStatus.isNotBlank()) collectorStatus else "Fluxo pronto para busca imediata.",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary
+            )
 
-                    item {
-                        ProximityIndicator(
-                            title = proximityTitle,
-                            percent = proximityPercent,
-                            label = proximityLabel,
-                            supportingText = proximitySupportingText
-                        )
-                    }
-                } else if (selectedType.key == ProductSearchTypeKey) {
-                    item {
-                        SearchHeader(
-                            value = searchInput,
-                            onValueChange = onSearchInputChange,
-                            onSearchClick = onTextSearch,
-                            placeholder = "Nome, codigo, reduzido ou EAN"
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val spacing = AppSpacing.sm
+                val itemWidth = (maxWidth - (spacing * (actionTiles.size - 1))) / actionTiles.size
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing)
+                ) {
+                    actionTiles.forEach { tile ->
+                        ActionTile(
+                            label = tile.label,
+                            icon = tile.icon,
+                            active = tile.active,
+                            modifier = Modifier.width(itemWidth),
+                            onClick = tile.onClick
                         )
                     }
                 }
+            }
 
-                if (!errorMessage.isNullOrBlank()) {
-                    item {
-                        InlineNoticeCard(message = errorMessage)
-                    }
-                }
-
-                item {
-                    when {
-                        isTagMode && tagTargets.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Adicione a primeira tag",
-                                supportingText = "Digite o EPC e monte a lista de alvos para buscar.",
-                                actionLabel = "Adicionar tag",
-                                onAction = onAddTag
-                            )
-                        }
-
-                        isTagMode && matchedProducts.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Nenhum produto vinculado a essas tags",
-                                supportingText = "A busca RFID continua funcionando mesmo sem dados externos."
-                            )
-                        }
-
-                        isTagMode -> {
-                            SearchResultsCard(
-                                products = matchedProducts,
-                                selectedTarget = selectedTarget.label
-                            )
-                        }
-
-                        selectedType.requiresManualEntry && currentValue.isBlank() -> {
-                            EmptyStateBox(
-                                title = "Informe o valor da busca",
-                                supportingText = "Use ${selectedType.label} para localizar os produtos.",
-                                actionLabel = "Informar ${selectedType.label}",
-                                onAction = onOpenType
-                            )
-                        }
-
-                        selectedType.key == ProductSearchTypeKey && searchInput.isBlank() && currentValue.isBlank() -> {
-                            EmptyStateBox(
-                                title = "Digite um produto para buscar",
-                                supportingText = "Informe nome ou codigo e toque em Buscar."
-                            )
-                        }
-
-                        filteredProducts.isEmpty() -> {
-                            EmptyStateBox(
-                                title = "Nenhum produto localizado",
-                                supportingText = "Tente outro valor ou troque o tipo de busca.",
-                                actionLabel = "Escolher outro tipo",
-                                onAction = onOpenType
-                            )
-                        }
-
-                        else -> {
-                            SearchResultsCard(
-                                products = filteredProducts,
-                                selectedTarget = selectedTarget.label
-                            )
-                        }
-                    }
-                }
+            if (isTagMode) {
+                PowerControlStrip(
+                    powerLevel = powerLevel,
+                    onDecreasePower = onDecreasePower,
+                    onIncreasePower = onIncreasePower
+                )
             }
         }
     }
@@ -618,21 +534,40 @@ private fun TagCommandCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
+        colors = CardDefaults.cardColors(containerColor = AppColors.AccentSurface),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
         ) {
-            Text(
-                text = if (tagCount == 0) "Nenhuma tag adicionada" else "$tagCount tag(s) adicionada(s)",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppColors.TextPrimary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                    Text(
+                        text = "TAGS",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                        color = AppColors.TextSecondary
+                    )
+                    Text(
+                        text = if (tagCount == 0) "Monte a lista de busca" else "$tagCount tag(s) adicionada(s)",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AppColors.TextPrimary
+                    )
+                }
+                Text(
+                    text = "EPC 24",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = AppColors.TopBarBlue
+                )
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
@@ -643,7 +578,7 @@ private fun TagCommandCard(
                     modifier = Modifier.weight(1f)
                 )
                 ActionButtonOutline(
-                    text = "Limpar tags",
+                    text = "Limpar lista",
                     onClick = onClearTags,
                     modifier = Modifier.weight(1f),
                     enabled = tagCount > 0
@@ -662,162 +597,173 @@ private fun InlineNoticeCard(message: String) {
         border = BorderStroke(1.dp, AppColors.Divider),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Text(
-            text = message,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(AppSpacing.md),
-            style = MaterialTheme.typography.bodySmall,
-            color = AppColors.TextPrimary
-        )
-    }
-}
-
-@Composable
-private fun SearchActionRow(
-    currentType: String,
-    currentValue: String,
-    readingActive: Boolean,
-    collectorLabel: String,
-    collectorStatus: String,
-    showPowerControl: Boolean,
-    powerLevel: Int,
-    onStartReading: () -> Unit,
-    onStopReading: () -> Unit,
-    onOpenType: () -> Unit,
-    onClear: () -> Unit,
-    onDecreasePower: () -> Unit,
-    onIncreasePower: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val itemWidth = (maxWidth - (AppSpacing.sm * 3)) / 4
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                ) {
-                    ActionCell(
-                        label = "Iniciar",
-                        active = readingActive,
-                        modifier = Modifier.width(itemWidth),
-                        onClick = onStartReading
-                    )
-                    ActionCell(
-                        label = "Parar",
-                        modifier = Modifier.width(itemWidth),
-                        onClick = onStopReading
-                    )
-                    ActionCell(
-                        label = "Tipo",
-                        modifier = Modifier.width(itemWidth),
-                        onClick = onOpenType
-                    )
-                    ActionCell(
-                        label = "Limpar",
-                        modifier = Modifier.width(itemWidth),
-                        onClick = onClear
-                    )
-                }
-            }
-
-            if (showPowerControl) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
-                ) {
-                    Text(
-                        text = "Potencia",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TextSecondary
-                    )
-                    PowerStepButton(label = "-", onClick = onDecreasePower)
-                    Text(
-                        text = powerLevel.toString(),
-                        modifier = Modifier
-                            .border(1.dp, AppColors.Divider, AppShapes.input)
-                            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AppColors.TextPrimary
-                    )
-                    PowerStepButton(label = "+", onClick = onIncreasePower)
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
-                Text(
-                    text = "$collectorLabel  |  $currentType",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TextSecondary
-                )
-                Text(
-                    text = if (currentValue.isNotBlank()) currentValue else collectorStatus,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TopBarBlue
-                )
-            }
+            Icon(
+                imageVector = Icons.Outlined.BluetoothConnected,
+                contentDescription = null,
+                tint = AppColors.TextPrimary
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextPrimary
+            )
         }
     }
 }
 
 @Composable
-private fun ActionCell(
+private fun ActionTile(
     label: String,
+    icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     active: Boolean = false
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(44.dp),
+        modifier = modifier.height(74.dp),
         shape = AppShapes.button,
         border = BorderStroke(
             width = 1.dp,
-            color = if (active) AppColors.BrandSignalBlue.copy(alpha = 0.44f) else AppColors.Divider
+            color = if (active) AppColors.PrimaryActionBlue else AppColors.Divider
         ),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = if (active) AppColors.AccentSurface else AppColors.FieldBackground,
             contentColor = if (active) AppColors.TopBarBlue else AppColors.TextPrimary
         )
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            textAlign = TextAlign.Center
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 10.sp,
+                    letterSpacing = 0.sp
+                ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip
+            )
+        }
+    }
+}
+
+@Composable
+private fun PowerControlStrip(
+    powerLevel: Int,
+    onDecreasePower: () -> Unit,
+    onIncreasePower: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppColors.FieldBackground, AppShapes.card)
+            .border(1.dp, AppColors.Divider, AppShapes.card)
+            .padding(AppSpacing.md),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+            Text(
+                text = "POTENCIA",
+                style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                color = AppColors.TextSecondary
+            )
+            Text(
+                text = "Ajuste rapido do leitor",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PowerStepButton(label = "-", onClick = onDecreasePower)
+            Text(
+                text = powerLevel.toString(),
+                modifier = Modifier
+                    .border(1.dp, AppColors.Divider, AppShapes.input)
+                    .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm),
+                style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
+                color = AppColors.TextPrimary
+            )
+            PowerStepButton(label = "+", onClick = onIncreasePower, filled = true)
+        }
     }
 }
 
 @Composable
 private fun PowerStepButton(
     label: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    filled: Boolean = false
 ) {
     OutlinedButton(
         onClick = onClick,
         shape = AppShapes.button,
         border = BorderStroke(1.dp, AppColors.Divider),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = AppColors.FieldBackground,
-            contentColor = AppColors.TextPrimary
+            containerColor = if (filled) AppColors.PrimaryActionBlue else AppColors.CardSurface,
+            contentColor = if (filled) AppColors.TopBarOnBlue else AppColors.TextPrimary
         )
     ) {
-        Text(text = label)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.sp
+            ),
+            color = if (filled) AppColors.TopBarOnBlue else AppColors.TextPrimary
+        )
     }
 }
+
+@Composable
+private fun OperationChip(
+    text: String,
+    accent: Boolean = false
+) {
+    Box(
+        modifier = Modifier
+            .background(
+                if (accent) AppColors.TopBarBlue.copy(alpha = 0.10f) else AppColors.FieldBackground,
+                AppShapes.button
+            )
+            .border(
+                1.dp,
+                if (accent) AppColors.AccentBorder else AppColors.Divider,
+                AppShapes.button
+            )
+            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xs)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+            color = if (accent) AppColors.TopBarBlue else AppColors.TextPrimary
+        )
+    }
+}
+
+private data class ActionTileSpec(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+    val active: Boolean = false
+)
 
 @Composable
 private fun TargetSelector(
@@ -830,15 +776,28 @@ private fun TargetSelector(
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.card,
         colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm),
+                .padding(horizontal = AppSpacing.md, vertical = AppSpacing.md),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
+            Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
+                Text(
+                    text = "TARGETS",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = "Filtrar a exibicao dos resultados",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -876,7 +835,7 @@ private fun TargetButton(
         shape = AppShapes.button,
         border = BorderStroke(
             width = 1.dp,
-            color = if (selected) AppColors.BrandSignalBlue.copy(alpha = 0.34f) else AppColors.Divider
+            color = if (selected) AppColors.PrimaryActionBlue else AppColors.Divider
         ),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = if (selected) AppColors.AccentSurface else AppColors.FieldBackground,
@@ -914,14 +873,32 @@ private fun SearchResultsCard(
         modifier = Modifier.fillMaxWidth(),
         shape = AppShapes.card,
         colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
+        border = BorderStroke(1.dp, AppColors.AccentBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
+            ) {
+                Text(
+                    text = "RESULTADOS",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 11.sp),
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = "${products.size} item(ns) em $selectedTarget",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = AppColors.TextPrimary
+                )
+            }
+
             products.forEachIndexed { index, product ->
                 SimpleListRow(
                     title = product.name,
-                    subtitle = "Cod. ${product.code}  |  $selectedTarget  |  ${targetStateLabel(product.targetState)}",
+                    subtitle = "Cod. ${product.code}  |  ${targetStateLabel(product.targetState)}  |  ${product.tagCode.takeLast(8)}",
                     showDivider = index < products.lastIndex
                 )
             }
@@ -1033,5 +1010,235 @@ private fun GlobalSearchScreenSheetPreview() {
             onMenuClick = {},
             initialSheetOpen = true
         )
+    }
+}
+
+@Composable
+private fun GlobalSearchContent(
+    products: List<ProductListItem>,
+    searchTargets: List<SearchTargetItem>,
+    selectedTarget: SearchTargetItem,
+    selectedTargetKey: String,
+    selectedType: SearchTypeOption,
+    isTagMode: Boolean,
+    onSelectTarget: (String) -> Unit,
+    onMenuClick: () -> Unit,
+    onOpenType: () -> Unit,
+    onStartSearch: () -> Unit,
+    onStopSearch: () -> Unit,
+    onClear: () -> Unit,
+    onAddTag: () -> Unit,
+    onClearTags: () -> Unit,
+    onRemoveTag: (String) -> Unit,
+    onDecreasePower: () -> Unit,
+    onIncreasePower: () -> Unit,
+    collectorLabel: String,
+    collectorStatus: String,
+    connectedDeviceName: String?,
+    readingActive: Boolean,
+    powerLevel: Int,
+    readCount: Int,
+    foundCount: Int,
+    tagCount: Int,
+    searchInput: String,
+    searchValue: String,
+    onSearchInputChange: (String) -> Unit,
+    onTextSearch: () -> Unit,
+    filteredProducts: List<ProductListItem>,
+    matchedProducts: List<ProductListItem>,
+    tagTargets: List<TagTargetItemUi>,
+    leadingTarget: TagTargetItemUi?,
+    errorMessage: String?,
+    modifier: Modifier = Modifier
+) {
+    val proximityTitle = if (leadingTarget != null && leadingTarget.proximityPercent > 0) {
+        "Tag mais proxima"
+    } else {
+        "Sinal em tempo real"
+    }
+    val proximityPercent = leadingTarget?.proximityPercent ?: 0
+    val proximityLabel = leadingTarget?.proximityLabel ?: if (readingActive) "Aguardando" else "Pronto"
+    val proximitySupportingText = when {
+        leadingTarget != null && leadingTarget.proximityPercent > 0 -> {
+            buildString {
+                append(leadingTarget.epc)
+                if (!leadingTarget.matchedProductName.isNullOrBlank()) {
+                    append("  |  ")
+                    append(leadingTarget.matchedProductName)
+                }
+            }
+        }
+
+        tagTargets.isEmpty() -> "Adicione as tags alvo e toque em Iniciar."
+        readingActive -> "Mantenha o coletor em movimento ate a proximidade subir."
+        else -> "Conecte o coletor e use Iniciar para comecar a localizacao."
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(AppColors.ScreenBackground)
+    ) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = AppColors.ScreenBackground,
+            topBar = {
+                AppTopBar(
+                    title = "Buscar Produtos",
+                    eyebrow = "Nexus RFID",
+                    onNavigationClick = onMenuClick
+                )
+            }
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AppColors.ScreenBackground)
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(AppSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                item {
+                    SearchOverviewCard(
+                        currentType = selectedType.label,
+                        isTagMode = isTagMode,
+                        collectorLabel = collectorLabel,
+                        collectorStatus = collectorStatus,
+                        connectedDeviceName = connectedDeviceName,
+                        readingActive = readingActive,
+                        powerLevel = powerLevel,
+                        searchValue = searchValue,
+                        tagCount = tagCount,
+                        onStartSearch = onStartSearch,
+                        onStopSearch = onStopSearch,
+                        onOpenType = onOpenType,
+                        onClear = onClear,
+                        onDecreasePower = onDecreasePower,
+                        onIncreasePower = onIncreasePower
+                    )
+                }
+
+                if (!isTagMode) {
+                    item {
+                        SearchHeader(
+                            value = searchInput,
+                            onValueChange = onSearchInputChange,
+                            onSearchClick = onTextSearch,
+                            sectionTitle = "Consulta",
+                            placeholder = "Nome, codigo, reduzido ou EAN"
+                        )
+                    }
+                }
+
+                item {
+                    CounterBar(
+                        readCount = readCount,
+                        foundCount = foundCount
+                    )
+                }
+
+                item {
+                    TargetSelector(
+                        targets = searchTargets,
+                        products = products,
+                        selectedKey = selectedTargetKey,
+                        onSelect = onSelectTarget
+                    )
+                }
+
+                if (isTagMode) {
+                    item {
+                        TagCommandCard(
+                            tagCount = tagCount,
+                            onAddTag = onAddTag,
+                            onClearTags = onClearTags
+                        )
+                    }
+
+                    if (tagTargets.isNotEmpty()) {
+                        item {
+                            TagTargetList(
+                                items = tagTargets,
+                                onRemove = onRemoveTag
+                            )
+                        }
+                    }
+
+                    item {
+                        ProximityIndicator(
+                            title = proximityTitle,
+                            percent = proximityPercent,
+                            label = proximityLabel,
+                            supportingText = proximitySupportingText
+                        )
+                    }
+                }
+
+                if (!errorMessage.isNullOrBlank()) {
+                    item {
+                        InlineNoticeCard(message = errorMessage)
+                    }
+                }
+
+                item {
+                    when {
+                        isTagMode && tagTargets.isEmpty() -> {
+                            EmptyStateBox(
+                                title = "Nenhuma tag adicionada",
+                                supportingText = "Abra o popup, informe o EPC com 24 caracteres e monte a lista de busca.",
+                                actionLabel = "Adicionar tag",
+                                onAction = onAddTag
+                            )
+                        }
+
+                        isTagMode && matchedProducts.isEmpty() -> {
+                            EmptyStateBox(
+                                title = "Sem produto vinculado",
+                                supportingText = "A busca RFID continua funcionando mesmo quando o cadastro do item ainda nao veio da API."
+                            )
+                        }
+
+                        isTagMode -> {
+                            SearchResultsCard(
+                                products = matchedProducts,
+                                selectedTarget = selectedTarget.label
+                            )
+                        }
+
+                        selectedType.requiresManualEntry && searchValue.isBlank() -> {
+                            EmptyStateBox(
+                                title = "Informe o valor da consulta",
+                                supportingText = "Use ${selectedType.label} para localizar o item.",
+                                actionLabel = "Escolher ${selectedType.label}",
+                                onAction = onOpenType
+                            )
+                        }
+
+                        selectedType.key == ProductSearchTypeKey && searchInput.isBlank() && searchValue.isBlank() -> {
+                            EmptyStateBox(
+                                title = "Digite o produto",
+                                supportingText = "Informe nome ou codigo e use Buscar."
+                            )
+                        }
+
+                        filteredProducts.isEmpty() -> {
+                            EmptyStateBox(
+                                title = "Nenhum produto localizado",
+                                supportingText = "Tente outro valor ou mude o tipo de busca.",
+                                actionLabel = "Trocar tipo",
+                                onAction = onOpenType
+                            )
+                        }
+
+                        else -> {
+                            SearchResultsCard(
+                                products = filteredProducts,
+                                selectedTarget = selectedTarget.label
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }

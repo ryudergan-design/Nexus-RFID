@@ -101,7 +101,6 @@ class R6BluetoothReader(
             RFIDWithUHFBluetooth.StatusEnum.CONNECTED -> RfidConnectionState.Connected
             RFIDWithUHFBluetooth.StatusEnum.CONNECTING -> RfidConnectionState.Connecting
             RFIDWithUHFBluetooth.StatusEnum.DISCONNECTED -> RfidConnectionState.Disconnected
-            else -> RfidConnectionState.Error
         }
     }
 

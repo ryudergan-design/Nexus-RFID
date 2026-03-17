@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.nexusrfid.rfid.CollectorModel
 import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.rfid.RfidDevice
+import com.example.nexusrfid.rfid.RfidPermissionGateway
 import com.example.nexusrfid.rfid.RfidReader
 import com.example.nexusrfid.rfid.RfidTagRead
 import com.example.nexusrfid.rfid.r6.R6BluetoothReader
@@ -27,6 +28,7 @@ class NexusRfidAppState internal constructor(
     context: Context,
     private val r6Reader: RfidReader = R6BluetoothReader(context.applicationContext)
 ) {
+    private val appContext = context.applicationContext
     private val mainHandler = Handler(Looper.getMainLooper())
     private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
     private var lastToneAt = 0L
@@ -84,11 +86,12 @@ class NexusRfidAppState internal constructor(
 
         selectedCollectorModel = model
         connectedDevice = null
+        availableDevices.clear()
         connectionState = RfidConnectionState.Idle
         errorMessage = null
         statusMessage = when (model) {
             CollectorModel.C72 -> "C72 selecionado. A conexao fisica entra em uma etapa posterior."
-            CollectorModel.R6 -> "R6 selecionado. Procure o coletor para conectar por Bluetooth."
+            CollectorModel.R6 -> "R6 selecionado. Carregue a lista de pareados para conectar."
         }
     }
 
@@ -117,24 +120,29 @@ class NexusRfidAppState internal constructor(
         }
 
         errorMessage = null
-        availableDevices.clear()
         isDeviceScanRunning = true
-        connectionState = RfidConnectionState.Scanning
-        statusMessage = "Procurando coletores R6 por Bluetooth..."
+        availableDevices.clear()
+        statusMessage = "Carregando coletores pareados..."
 
-        r6Reader.startScan { device ->
-            mainHandler.post {
-                upsertDevice(device)
+        mainHandler.post {
+            val devices = RfidPermissionGateway.bondedDevices(appContext)
+            availableDevices.addAll(devices)
+            isDeviceScanRunning = false
+            if (connectionState != RfidConnectionState.Connected) {
+                connectionState = RfidConnectionState.Idle
+            }
+            statusMessage = when {
+                devices.isEmpty() -> "Nenhum coletor pareado encontrado. Pareie o R6 nas configuracoes do Android."
+                devices.size == 1 -> "1 coletor pareado pronto para conectar."
+                else -> "${devices.size} coletores pareados prontos para conectar."
             }
         }
     }
 
     fun stopDeviceScan() {
         isDeviceScanRunning = false
-        r6Reader.stopScan()
         if (connectionState == RfidConnectionState.Scanning) {
             connectionState = RfidConnectionState.Idle
-            statusMessage = "Busca de coletor pausada."
         }
     }
 
@@ -156,7 +164,7 @@ class NexusRfidAppState internal constructor(
         r6Reader.disconnect()
         connectedDevice = null
         connectionState = RfidConnectionState.Disconnected
-        statusMessage = "Coletor desconectado."
+        statusMessage = "Coletor desconectado. Abra a lista de pareados para reconectar."
     }
 
     fun startInventory(): Boolean {
@@ -224,23 +232,10 @@ class NexusRfidAppState internal constructor(
         runCatching { toneGenerator.release() }
     }
 
-    private fun upsertDevice(device: RfidDevice) {
-        val existingIndex = availableDevices.indexOfFirst { it.address == device.address }
-        if (existingIndex >= 0) {
-            availableDevices[existingIndex] = device
-        } else {
-            availableDevices.add(device)
-        }
-
-        val sorted = availableDevices.sortedByDescending { it.rssi ?: Int.MIN_VALUE }
-        availableDevices.clear()
-        availableDevices.addAll(sorted)
-    }
-
     private fun RfidConnectionState.toStatusMessage(device: RfidDevice?): String {
         return when (this) {
             RfidConnectionState.Idle -> "Selecione o coletor e conecte o R6 para iniciar."
-            RfidConnectionState.Scanning -> "Procurando coletores R6 por Bluetooth..."
+            RfidConnectionState.Scanning -> "Carregando coletores pareados..."
             RfidConnectionState.Connecting -> "Conectando em ${device?.displayName ?: "R6"}..."
             RfidConnectionState.Connected -> "${device?.displayName ?: "R6"} conectado."
             RfidConnectionState.Disconnected -> "Coletor desconectado."

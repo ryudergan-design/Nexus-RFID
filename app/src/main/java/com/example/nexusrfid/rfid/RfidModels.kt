@@ -21,7 +21,10 @@ data class RfidDevice(
     val bonded: Boolean = false
 ) {
     val displayName: String
-        get() = name.ifBlank { "R6 sem nome" }
+        get() = name.ifBlank {
+            val suffix = address.takeLast(8).ifBlank { "pareado" }
+            "Coletor $suffix"
+        }
 }
 
 data class RfidTagRead(
@@ -30,4 +33,3 @@ data class RfidTagRead(
     val tid: String? = null,
     val seenAtMillis: Long = System.currentTimeMillis()
 )
-

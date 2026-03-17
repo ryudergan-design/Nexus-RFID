@@ -66,18 +66,38 @@ private fun CounterItem(
         modifier = modifier
             .background(backgroundColor, AppShapes.card)
             .border(1.dp, borderColor, AppShapes.card)
-            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
+            .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
     ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = contentColor.copy(alpha = 0.78f)
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelLarge,
+            color = contentColor.copy(alpha = 0.76f)
         )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm)
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = contentColor
+            )
+            Text(
+                text = if (label == "Lidas") "leituras" else "localizadas",
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = 0.76f)
+            )
+        }
+
         Text(
-            text = value,
-            style = MaterialTheme.typography.headlineSmall,
-            color = contentColor
+            text = if (label == "Lidas") {
+                "Total recebido pelo coletor"
+            } else {
+                "Tags alvo com leitura recente"
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = contentColor.copy(alpha = 0.68f)
         )
     }
 }

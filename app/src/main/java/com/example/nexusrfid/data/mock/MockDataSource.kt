@@ -141,14 +141,12 @@ object MockDataSource {
         RfidDevice(
             name = "R6 Nexus 01",
             address = "00:11:22:33:44:55",
-            rssi = -48,
             bonded = true
         ),
         RfidDevice(
-            name = "R6 Nexus 02",
+            name = "",
             address = "66:77:88:99:AA:BB",
-            rssi = -62,
-            bonded = false
+            bonded = true
         )
     )
 
