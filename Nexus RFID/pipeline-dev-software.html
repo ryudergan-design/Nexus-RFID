@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline de Desenvolvimento de Software Profissional</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent1: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #ef4444;
+    --accent6: #ec4899;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --dim: #334155;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0.8;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 80px);
+    line-height: 1.05;
+    max-width: 900px;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 48px;
+  }
+
+  .pipeline-visual {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .pill {
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .arrow {
+    color: var(--dim);
+    font-size: 18px;
+    margin: 0 6px;
+  }
+
+  /* GRID LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  .section {
+    padding: 100px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 4vw, 52px);
+    line-height: 1.1;
+    margin-bottom: 48px;
+  }
+
+  /* PILLAR CARDS */
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .pillar-card {
+    background: var(--surface);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: background 0.3s;
+  }
+
+  .pillar-card:hover { background: #15151f; }
+
+  .pillar-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .pillar-card.c1::before { background: var(--accent1); }
+  .pillar-card.c2::before { background: var(--accent2); }
+  .pillar-card.c3::before { background: var(--accent3); }
+  .pillar-card.c4::before { background: var(--accent4); }
+  .pillar-card.c5::before { background: var(--accent5); }
+  .pillar-card.c6::before { background: var(--accent6); }
+  .pillar-card.c7::before { background: linear-gradient(90deg, var(--accent1), var(--accent2)); }
+  .pillar-card.c8::before { background: linear-gradient(90deg, var(--accent3), var(--accent4)); }
+
+  .pillar-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+  }
+
+  .pillar-icon {
+    font-size: 32px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .pillar-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .pillar-card p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.7;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+  }
+
+  .c1 .tag { color: var(--accent1); border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.07); }
+  .c2 .tag { color: var(--accent2); border-color: rgba(6,182,212,0.3); background: rgba(6,182,212,0.07); }
+  .c3 .tag { color: var(--accent3); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); }
+  .c4 .tag { color: var(--accent4); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.07); }
+  .c5 .tag { color: var(--accent5); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.07); }
+  .c6 .tag { color: var(--accent6); border-color: rgba(236,72,153,0.3); background: rgba(236,72,153,0.07); }
+  .c7 .tag { color: var(--accent1); border-color: rgba(124,58,237,0.3); background: rgba(124,58,237,0.07); }
+  .c8 .tag { color: var(--accent3); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); }
+
+  /* DEEP DIVE SECTIONS */
+  .deep-section {
+    padding: 80px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .deep-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+    margin-bottom: 56px;
+  }
+
+  .deep-accent-bar {
+    width: 4px;
+    height: 100%;
+    min-height: 80px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+  }
+
+  @media (max-width: 768px) {
+    .content-grid { grid-template-columns: 1fr; }
+  }
+
+  .content-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    border-radius: 2px;
+  }
+
+  .content-block h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .content-block ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .content-block li {
+    font-size: 14px;
+    color: var(--muted);
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .content-block li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--dim);
+    font-size: 12px;
+  }
+
+  .content-block li strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    padding: 24px 28px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--muted);
+    overflow-x: auto;
+    margin: 24px 0;
+    border-radius: 2px;
+  }
+
+  .code-block .kw { color: var(--accent1); }
+  .code-block .str { color: var(--accent4); }
+  .code-block .cm { color: var(--dim); }
+  .code-block .fn { color: var(--accent2); }
+  .code-block .num { color: var(--accent3); }
+
+  /* PIPELINE FLOW */
+  .flow-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 40px 0;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0;
+    background: var(--border);
+  }
+
+  .flow-step-label {
+    background: var(--surface);
+    padding: 20px 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    border-right: 2px solid;
+  }
+
+  .flow-step-content {
+    background: var(--surface);
+    padding: 20px 28px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .flow-step-content strong { color: var(--text); }
+
+  /* TECH STACK TABLE */
+  .tech-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 32px 0;
+  }
+
+  .tech-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .tech-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: top;
+  }
+
+  .tech-table td:first-child {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .tech-table tr:hover td { background: var(--surface); }
+
+  /* CALLOUT */
+  .callout {
+    border-left: 3px solid;
+    padding: 20px 24px;
+    margin: 32px 0;
+    background: var(--surface);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .callout p { font-size: 14px; color: var(--muted); }
+  .callout strong { color: var(--text); }
+
+  /* CHECKLIST */
+  .checklist {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 32px 0;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .check-icon {
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* VIBE CODING SECTION */
+  .vibe-section {
+    background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(6,182,212,0.08));
+    border: 1px solid rgba(124,58,237,0.2);
+    padding: 60px;
+    margin: 60px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vibe-section::before {
+    content: 'VIBE CODING';
+    position: absolute;
+    top: -20px; right: -10px;
+    font-family: 'Syne', sans-serif;
+    font-size: 120px;
+    font-weight: 800;
+    color: rgba(124,58,237,0.05);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 60px 0;
+    text-align: center;
+  }
+
+  footer p {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .flow-step { grid-template-columns: 1fr; }
+    .flow-step-label { border-right: none; border-bottom: 2px solid; }
+    .vibe-section { padding: 40px 24px; }
+    .deep-header { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-label">Guia Profissional · 2024</div>
+  <h1>Pipeline Completo de<br><span>Desenvolvimento de Software</span></h1>
+  <p>Do conceito ao deploy — todos os pilares que compõem uma construção profissional, com foco em Vibe Coding.</p>
+  <div class="pipeline-visual">
+    <span class="pill" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3)">Arquitetura</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(6,182,212,0.15);color:#67e8f9;border:1px solid rgba(6,182,212,0.3)">Banco de Dados</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3)">Backend</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3)">Frontend</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)">Segurança</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(236,72,153,0.15);color:#f9a8d4;border:1px solid rgba(236,72,153,0.3)">Testes</span>
+    <span class="arrow">›</span>
+    <span class="pill" style="background:rgba(124,58,237,0.15);color:#a78bfa;border:1px solid rgba(124,58,237,0.3)">DevOps/CI</span>
+  </div>
+</section>
+
+<!-- OVERVIEW DOS PILARES -->
+<section class="section">
+  <div class="container">
+    <div class="section-label">Visão Geral</div>
+    <h2 class="section-title">Os 8 Pilares de um<br>Software Profissional</h2>
+    <div class="pillars-grid">
+
+      <div class="pillar-card c1">
+        <div class="pillar-number">01 / 08</div>
+        <span class="pillar-icon">🏛️</span>
+        <h3>Arquitetura</h3>
+        <p>A fundação que define como todos os componentes se comunicam, escalam e evoluem. Decisões erradas aqui custam caro depois.</p>
+        <div class="tag-list">
+          <span class="tag">Monolito</span>
+          <span class="tag">Microserviços</span>
+          <span class="tag">Event-Driven</span>
+          <span class="tag">Serverless</span>
+          <span class="tag">CQRS</span>
+          <span class="tag">DDD</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c2">
+        <div class="pillar-number">02 / 08</div>
+        <span class="pillar-icon">🗄️</span>
+        <h3>Banco de Dados</h3>
+        <p>Onde os dados vivem, são consultados e persistem. Escolha errada de banco compromete performance e escalabilidade.</p>
+        <div class="tag-list">
+          <span class="tag">PostgreSQL</span>
+          <span class="tag">MongoDB</span>
+          <span class="tag">Redis</span>
+          <span class="tag">Migrations</span>
+          <span class="tag">ORM</span>
+          <span class="tag">Indexação</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c3">
+        <div class="pillar-number">03 / 08</div>
+        <span class="pillar-icon">⚙️</span>
+        <h3>Backend</h3>
+        <p>A lógica de negócio, APIs e processamento de dados. É o cérebro da aplicação que orquestra tudo.</p>
+        <div class="tag-list">
+          <span class="tag">REST API</span>
+          <span class="tag">GraphQL</span>
+          <span class="tag">Autenticação</span>
+          <span class="tag">Filas</span>
+          <span class="tag">Caching</span>
+          <span class="tag">Webhooks</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c4">
+        <div class="pillar-number">04 / 08</div>
+        <span class="pillar-icon">🎨</span>
+        <h3>Frontend</h3>
+        <p>A interface com o usuário final. Performance, acessibilidade e experiência determinam adoção do produto.</p>
+        <div class="tag-list">
+          <span class="tag">React/Next.js</span>
+          <span class="tag">State Mgmt</span>
+          <span class="tag">SSR/SSG</span>
+          <span class="tag">A11y</span>
+          <span class="tag">Web Vitals</span>
+          <span class="tag">Design System</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c5">
+        <div class="pillar-number">05 / 08</div>
+        <span class="pillar-icon">🔒</span>
+        <h3>Segurança</h3>
+        <p>Camada transversal que protege dados, usuários e infraestrutura. Não é feature — é requisito.</p>
+        <div class="tag-list">
+          <span class="tag">OWASP Top 10</span>
+          <span class="tag">JWT/OAuth</span>
+          <span class="tag">SQL Injection</span>
+          <span class="tag">XSS/CSRF</span>
+          <span class="tag">Secrets Mgmt</span>
+          <span class="tag">Rate Limiting</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c6">
+        <div class="pillar-number">06 / 08</div>
+        <span class="pillar-icon">🧪</span>
+        <h3>Testes</h3>
+        <p>A rede de segurança que permite refatorar e evoluir sem medo. Código sem teste é código que vai quebrar em produção.</p>
+        <div class="tag-list">
+          <span class="tag">Unit Tests</span>
+          <span class="tag">Integration</span>
+          <span class="tag">E2E</span>
+          <span class="tag">TDD</span>
+          <span class="tag">Coverage</span>
+          <span class="tag">Mocking</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c7">
+        <div class="pillar-number">07 / 08</div>
+        <span class="pillar-icon">🚀</span>
+        <h3>DevOps / CI/CD</h3>
+        <p>Automação de deploy, infraestrutura como código e observabilidade. Garante que o software chegue ao usuário de forma confiável.</p>
+        <div class="tag-list">
+          <span class="tag">Docker</span>
+          <span class="tag">GitHub Actions</span>
+          <span class="tag">Kubernetes</span>
+          <span class="tag">Terraform</span>
+          <span class="tag">Monitoring</span>
+          <span class="tag">Logs</span>
+        </div>
+      </div>
+
+      <div class="pillar-card c8">
+        <div class="pillar-number">08 / 08</div>
+        <span class="pillar-icon">✅</span>
+        <h3>QA / Qualidade</h3>
+        <p>Processo sistemático de garantia da qualidade — além dos testes automatizados, inclui revisão, padronização e gestão técnica.</p>
+        <div class="tag-list">
+          <span class="tag">Code Review</span>
+          <span class="tag">Linting</span>
+          <span class="tag">SonarQube</span>
+          <span class="tag">Debt Técnico</span>
+          <span class="tag">Docs</span>
+          <span class="tag">Métricas</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 1: ARQUITETURA -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent1)"></div>
+      <div>
+        <div class="section-label">Pilar 01 · Fundação</div>
+        <h2 class="section-title" style="color:var(--text)">🏛️ Arquitetura de Software</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">Arquitetura não é apenas "como organizar pastas". É a decisão de como o sistema vai crescer, onde vai falhar, e o custo de cada mudança futura. Toda escolha arquitetural tem trade-offs.</p>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent1)"></span> Padrões Arquiteturais</h4>
+        <ul>
+          <li><strong>Monolito Modular</strong> — Ideal para início. Tudo junto, mas bem separado internamente</li>
+          <li><strong>Microserviços</strong> — Serviços independentes. Alta complexidade operacional</li>
+          <li><strong>BFF (Backend for Frontend)</strong> — API específica por tipo de cliente</li>
+          <li><strong>Event-Driven</strong> — Componentes comunicam via eventos assíncronos</li>
+          <li><strong>Serverless</strong> — Funções gerenciadas pelo provedor cloud</li>
+          <li><strong>Hexagonal (Ports & Adapters)</strong> — Isola o core de dependências externas</li>
+        </ul>
+      </div>
+
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent1)"></span> Princípios Essenciais</h4>
+        <ul>
+          <li><strong>SOLID</strong> — Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion</li>
+          <li><strong>DRY</strong> — Don't Repeat Yourself</li>
+          <li><strong>YAGNI</strong> — You Aren't Gonna Need It (não over-engineer)</li>
+          <li><strong>Separation of Concerns</strong> — Cada módulo faz uma coisa</li>
+          <li><strong>Loose Coupling</strong> — Componentes pouco dependentes entre si</li>
+          <li><strong>High Cohesion</strong> — Coisas relacionadas ficam juntas</li>
+        </ul>
+      </div>
+
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent1)"></span> Camadas de uma Aplicação</h4>
+        <ul>
+          <li><strong>Apresentação</strong> — Controllers, Routes, Middlewares</li>
+          <li><strong>Aplicação</strong> — Use Cases, Services, Commands/Queries</li>
+          <li><strong>Domínio</strong> — Entities, Value Objects, Domain Events</li>
+          <li><strong>Infraestrutura</strong> — Repositórios, ORM, APIs externas</li>
+          <li><strong>Transversal</strong> — Logs, Auth, Error handling</li>
+        </ul>
+      </div>
+
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent1)"></span> Para Vibe Coding</h4>
+        <ul>
+          <li><strong>Defina a estrutura de pastas antes de codar</strong></li>
+          <li><strong>Escreva o README arquitetural primeiro</strong> — explique para a IA como o projeto funciona</li>
+          <li><strong>Use convenções explícitas</strong> — a IA segue padrões claros</li>
+          <li><strong>Separe domínio da infra</strong> — facilita substituir dependências</li>
+          <li><strong>ADRs (Architecture Decision Records)</strong> — documente decisões importantes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="cm"># Estrutura base recomendada para projetos (monolito modular)</span>
+src/
+├── <span class="kw">modules/</span>           <span class="cm"># feature-based organization</span>
+│   ├── <span class="fn">users/</span>
+│   │   ├── <span class="str">user.entity.ts</span>
+│   │   ├── <span class="str">user.service.ts</span>
+│   │   ├── <span class="str">user.controller.ts</span>
+│   │   ├── <span class="str">user.repository.ts</span>
+│   │   └── <span class="str">user.dto.ts</span>
+│   └── <span class="fn">products/</span>
+├── <span class="kw">shared/</span>            <span class="cm"># código reutilizável</span>
+│   ├── <span class="str">errors/</span>
+│   ├── <span class="str">middleware/</span>
+│   └── <span class="str">utils/</span>
+├── <span class="kw">infra/</span>             <span class="cm"># dependências externas</span>
+│   ├── <span class="str">database/</span>
+│   ├── <span class="str">cache/</span>
+│   └── <span class="str">queue/</span>
+└── <span class="kw">config/</span>            <span class="cm"># configurações por ambiente</span>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 2: BANCO DE DADOS -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent2)"></div>
+      <div>
+        <div class="section-label">Pilar 02 · Persistência</div>
+        <h2 class="section-title">🗄️ Banco de Dados</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">O banco de dados é onde a realidade do seu negócio persiste. Modelagem errada é difícil de desfazer. Entender quando usar SQL vs NoSQL, como indexar e como migrar dados com segurança é fundamental.</p>
+      </div>
+    </div>
+
+    <table class="tech-table">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Exemplos</th>
+          <th>Quando Usar</th>
+          <th>Trade-offs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>SQL Relacional</td>
+          <td>PostgreSQL, MySQL, SQLite</td>
+          <td>Dados estruturados, relacionamentos complexos, transações ACID</td>
+          <td>Escala vertical, schema rígido — mas robusto e consistente</td>
+        </tr>
+        <tr>
+          <td>Document Store</td>
+          <td>MongoDB, Firestore</td>
+          <td>Dados semi-estruturados, esquema flexível, alto volume de escrita</td>
+          <td>Sem JOINs nativos, eventual consistency</td>
+        </tr>
+        <tr>
+          <td>Key-Value / Cache</td>
+          <td>Redis, Memcached</td>
+          <td>Sessões, cache, filas, rate limiting, pub/sub</td>
+          <td>Volátil por padrão, não é fonte de verdade</td>
+        </tr>
+        <tr>
+          <td>Search Engine</td>
+          <td>Elasticsearch, Meilisearch</td>
+          <td>Busca full-text, autocomplete, faceted search</td>
+          <td>Complexo de manter, usar em conjunto com DB principal</td>
+        </tr>
+        <tr>
+          <td>Time-series</td>
+          <td>InfluxDB, TimescaleDB</td>
+          <td>Métricas, IoT, logs com timestamp</td>
+          <td>Especializado — não substituir o DB principal</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> Boas Práticas de Modelagem</h4>
+        <ul>
+          <li><strong>Normalize para consistência</strong> — evite dados duplicados</li>
+          <li><strong>Desnormalize para performance</strong> — quando as queries exigem</li>
+          <li><strong>Use UUIDs ou ULIDs</strong> como PKs em sistemas distribuídos</li>
+          <li><strong>Soft delete</strong> — não delete dados, marque como deletado</li>
+          <li><strong>Timestamps em tudo</strong> — created_at, updated_at, deleted_at</li>
+          <li><strong>Não armazene senhas</strong> — apenas hashes (bcrypt, argon2)</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> Migrations e Evolução</h4>
+        <ul>
+          <li><strong>Nunca altere o schema direto em produção</strong></li>
+          <li><strong>Use migrations versionadas</strong> — Prisma, Flyway, Liquibase</li>
+          <li><strong>Backward compatible</strong> — adicione colunas com default antes de remover antigas</li>
+          <li><strong>Rollback plan</strong> — toda migration precisa ter um down</li>
+          <li><strong>Teste migrations em staging</strong> antes de produção</li>
+          <li><strong>Blue-green para grandes mudanças</strong> de schema</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="border-color:var(--accent2)">
+      <p><strong>Para Vibe Coding:</strong> Sempre peça para a IA gerar o schema do banco ANTES do código. Defina o modelo de dados, relacionamentos e índices primeiro. Uma mudança de schema depois custa 10x mais do que planejar bem antes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 3: BACKEND -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent3)"></div>
+      <div>
+        <div class="section-label">Pilar 03 · Lógica de Negócio</div>
+        <h2 class="section-title">⚙️ Backend</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">O backend é o centro nervoso da aplicação. Aqui vive a lógica de negócio, o processamento, as integrações e a exposição de APIs. Qualidade aqui se traduz diretamente em confiabilidade.</p>
+      </div>
+    </div>
+
+    <div class="flow-container">
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">REQUEST</div>
+        <div class="flow-step-content">Client envia requisição HTTP → <strong>Load Balancer</strong> distribui → chega no servidor</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">MIDDLEWARE</div>
+        <div class="flow-step-content"><strong>Auth</strong> (verifica JWT/session) → <strong>Rate Limiter</strong> → <strong>Validator</strong> (schema do body) → <strong>Logger</strong></div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">CONTROLLER</div>
+        <div class="flow-step-content">Extrai dados da request, chama o <strong>Use Case / Service</strong> correspondente, trata erros</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">SERVICE</div>
+        <div class="flow-step-content"><strong>Lógica de negócio</strong> — valida regras, chama repositórios, emite eventos, coordena operações</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">DATA LAYER</div>
+        <div class="flow-step-content"><strong>Repository</strong> acessa DB → <strong>Cache</strong> Redis → <strong>Queue</strong> para jobs assíncronos</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent3);border-color:var(--accent3)">RESPONSE</div>
+        <div class="flow-step-content">Serializa dados → aplica <strong>DTO/Schema</strong> de saída → retorna com status code correto</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent3)"></span> APIs bem projetadas</h4>
+        <ul>
+          <li><strong>REST</strong> — GET /users, POST /users, PUT /users/:id</li>
+          <li><strong>Status codes corretos</strong> — 200, 201, 400, 401, 403, 404, 422, 500</li>
+          <li><strong>Versionamento</strong> — /api/v1/... para não quebrar clientes</li>
+          <li><strong>Paginação</strong> — cursor ou offset, nunca retorne tudo</li>
+          <li><strong>Filtros e ordenação</strong> — ?sort=created_at&order=desc</li>
+          <li><strong>Documentação</strong> — Swagger/OpenAPI gerado automaticamente</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent3)"></span> Patterns críticos</h4>
+        <ul>
+          <li><strong>Repository Pattern</strong> — abstrai o acesso a dados</li>
+          <li><strong>Dependency Injection</strong> — inverte controle de dependências</li>
+          <li><strong>Command/Query Separation</strong> — operações de leitura ≠ escrita</li>
+          <li><strong>Circuit Breaker</strong> — protege de falhas em cascata</li>
+          <li><strong>Idempotência</strong> — mesma request → mesmo resultado</li>
+          <li><strong>Dead Letter Queue</strong> — jobs que falharam não são perdidos</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 4: FRONTEND -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent4)"></div>
+      <div>
+        <div class="section-label">Pilar 04 · Interface</div>
+        <h2 class="section-title">🎨 Frontend</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">O frontend é o único pilar que o usuário toca diretamente. Performance, acessibilidade e UX determinam se o produto é adotado ou abandonado.</p>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent4)"></span> Rendering Strategies</h4>
+        <ul>
+          <li><strong>CSR (Client-Side Rendering)</strong> — SPA clássico, React puro. Ruim para SEO</li>
+          <li><strong>SSR (Server-Side Rendering)</strong> — Next.js. HTML gerado no servidor por request</li>
+          <li><strong>SSG (Static Site Generation)</strong> — Build-time. Ultra rápido, ideal para conteúdo estático</li>
+          <li><strong>ISR (Incremental Static Regen.)</strong> — SSG com revalidação em background</li>
+          <li><strong>Streaming SSR</strong> — envia HTML em chunks, percepção de velocidade</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent4)"></span> State Management</h4>
+        <ul>
+          <li><strong>Local State</strong> — useState/useReducer para estado do componente</li>
+          <li><strong>Server State</strong> — TanStack Query/SWR para dados da API (cache, revalidação)</li>
+          <li><strong>Global State</strong> — Zustand, Jotai para estado compartilhado mínimo</li>
+          <li><strong>URL State</strong> — filtros e paginação na URL (shareable, back/forward funciona)</li>
+          <li><strong>Form State</strong> — React Hook Form + Zod para validação</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent4)"></span> Web Vitals (Core)</h4>
+        <ul>
+          <li><strong>LCP</strong> — Largest Contentful Paint. Deve ser &lt; 2.5s</li>
+          <li><strong>FID/INP</strong> — First Input Delay / Interaction to Next Paint. &lt; 200ms</li>
+          <li><strong>CLS</strong> — Cumulative Layout Shift. &lt; 0.1</li>
+          <li><strong>TTFB</strong> — Time to First Byte. Impacto do servidor</li>
+          <li><strong>Bundle size</strong> — code splitting, lazy loading, tree shaking</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent4)"></span> Design System</h4>
+        <ul>
+          <li><strong>Tokens de design</strong> — cores, tipografia, espaçamento como variáveis</li>
+          <li><strong>Componentes reutilizáveis</strong> — Button, Input, Modal, Table, etc.</li>
+          <li><strong>Storybook</strong> — documentação viva dos componentes</li>
+          <li><strong>Acessibilidade (A11y)</strong> — aria-*, contraste, navegação por teclado</li>
+          <li><strong>Dark mode</strong> — CSS custom properties com prefers-color-scheme</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 5: SEGURANÇA -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent5)"></div>
+      <div>
+        <div class="section-label">Pilar 05 · Proteção</div>
+        <h2 class="section-title">🔒 Segurança</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">Segurança não é uma fase do projeto — é uma camada transversal. Os ataques mais comuns são os mais simples, e a maioria das brechas vem de negligência, não de técnicas sofisticadas.</p>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">SQL Injection</strong><br>Nunca concatene strings em queries. Use prepared statements e ORM sempre.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">XSS (Cross-Site Scripting)</strong><br>Sanitize inputs, use CSP headers, nunca confie em dados do usuário no DOM.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">CSRF</strong><br>CSRF tokens em forms, SameSite cookies, verificar Origin header.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">Broken Auth</strong><br>JWT com expiração curta, refresh tokens rotativos, invalidação no logout.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">Secrets Expostos</strong><br>Nunca commite .env. Use Secret Manager (AWS, Doppler, Vault).</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">Rate Limiting</strong><br>Limite requests por IP/usuário. Protege de brute force e DDoS básico.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">IDOR (Insecure Direct Object Ref.)</strong><br>Sempre verifique se o usuário tem permissão no recurso que está acessando.</div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon" style="background:rgba(239,68,68,0.15);color:var(--accent5)">✗</div>
+        <div><strong style="color:var(--text)">Dependências Vulneráveis</strong><br>npm audit, Snyk, Dependabot automático no CI/CD.</div>
+      </div>
+    </div>
+
+    <div class="callout" style="border-color:var(--accent5)">
+      <p><strong>Regra de ouro de segurança:</strong> "Nunca confie em nada que veio de fora do seu servidor." — inputs do usuário, headers HTTP, callbacks de webhooks, dados de APIs externas. Valide, sanitize e autentique tudo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 6 e 7: TESTES E QA -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:var(--accent6)"></div>
+      <div>
+        <div class="section-label">Pilares 06 e 08 · Confiabilidade</div>
+        <h2 class="section-title">🧪 Testes e QA</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">Testes são a documentação viva do comportamento esperado. QA é o processo sistemático de garantir que o sistema funciona como deveria — e continua funcionando após cada mudança.</p>
+      </div>
+    </div>
+
+    <div class="flow-container">
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent6);border-color:var(--accent6)">UNIT TESTS</div>
+        <div class="flow-step-content"><strong>Testam funções isoladas.</strong> Rápidos, sem dependências externas. Use mocks. Cobrem lógica de negócio pura. Tools: Jest, Vitest, pytest</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent6);border-color:var(--accent6)">INTEGRATION</div>
+        <div class="flow-step-content"><strong>Testam módulos juntos.</strong> Controller + Service + DB real (ou in-memory). Verificam que as partes se conectam. Tools: Supertest, TestContainers</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent6);border-color:var(--accent6)">E2E TESTS</div>
+        <div class="flow-step-content"><strong>Simulam o usuário real.</strong> Abre browser, clica, preenche forms, verifica resultado. Mais lentos, mais caros. Tools: Playwright, Cypress</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent6);border-color:var(--accent6)">CONTRACT</div>
+        <div class="flow-step-content"><strong>Garante que API não quebrou.</strong> Consumer-driven contracts com Pact. Essencial em microserviços</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-label" style="color:var(--accent6);border-color:var(--accent6)">PERFORMANCE</div>
+        <div class="flow-step-content"><strong>Testa carga e stress.</strong> Quantas requests simultâneas o sistema aguenta? Tools: k6, Artillery, Locust</div>
+      </div>
+    </div>
+
+    <div class="callout" style="border-color:var(--accent6)">
+      <p><strong>Coverage não é tudo.</strong> 100% de coverage com testes ruins é pior do que 60% de coverage com testes que testam comportamento real. Foque no comportamento, não nas linhas.</p>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent6)"></span> Hierarquia de Testes (Akita)</h4>
+        <ul>
+          <li><strong>Testes unitários</strong> — isolamento extremo, diretórios isolados por worker para paralelização sem interferência</li>
+          <li><strong>Pipeline CI rápida</strong> — lint + segurança + testes em ~22 segundos. Roda em cada commit</li>
+          <li><strong>Pipeline de integração E2E</strong> — com dados reais via rsync de produção, chamadas reais a APIs com cache file-based (DevCache)</li>
+          <li><strong>Preflight / smoke test</strong> — valida estrutura, contagens mínimas e marcadores obrigatórios antes do pipeline principal</li>
+          <li><strong>Preview visual manual</strong> — o único que captura bugs estéticos que automação não detecta</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent6)"></span> Testes de Integração em Monorepo</h4>
+        <ul>
+          <li><strong>Contratos implícitos são o maior risco</strong> — múltiplos apps comunicando via filesystem/Markdown com frontmatter YAML</li>
+          <li><strong>Testes unitários não validam contratos entre apps</strong> — só o pipeline E2E detecta divergências</li>
+          <li><strong>Commits atômicos no monorepo</strong> — alteram ambos os lados do contrato (gerador e consumidor) no mesmo commit</li>
+          <li><strong>rsync de dados de produção</strong> — testa com dados reais, não fixtures</li>
+          <li><strong>Flag FORCE para bust de cache</strong> e SKIP_EXISTING para gerar só o que mudou</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PILAR 7: DEVOPS / CI/CD -->
+<section class="deep-section">
+  <div class="container">
+    <div class="deep-header">
+      <div class="deep-accent-bar" style="background:linear-gradient(180deg, var(--accent1), var(--accent2))"></div>
+      <div>
+        <div class="section-label">Pilar 07 · Operação</div>
+        <h2 class="section-title">🚀 DevOps e CI/CD</h2>
+        <p style="color:var(--muted);font-size:16px;max-width:700px">O software só cria valor quando está rodando em produção. DevOps é a disciplina de colocar código em produção com rapidez, segurança e confiabilidade — e mantê-lo funcionando.</p>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> Pipeline CI/CD Típico</h4>
+        <ul>
+          <li><strong>1. Push</strong> → trigger automático no GitHub/GitLab</li>
+          <li><strong>2. Lint + Type Check</strong> → falha rápido em erros óbvios</li>
+          <li><strong>3. Unit Tests</strong> → validação da lógica</li>
+          <li><strong>4. Build</strong> → compila e empacota a aplicação</li>
+          <li><strong>5. Integration Tests</strong> → testa com dependências reais</li>
+          <li><strong>6. Security Scan</strong> → SAST, dependências vulneráveis</li>
+          <li><strong>7. Deploy Staging</strong> → ambiente espelho do produção</li>
+          <li><strong>8. E2E Tests</strong> → valida o fluxo completo</li>
+          <li><strong>9. Deploy Production</strong> → blue-green ou canary</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> Observabilidade (3 Pilares)</h4>
+        <ul>
+          <li><strong>Logs</strong> — registro estruturado (JSON) de eventos. Ferramentas: Datadog, CloudWatch, Loki</li>
+          <li><strong>Métricas</strong> — números ao longo do tempo: latência, error rate, CPU, memória. Ferramentas: Prometheus + Grafana</li>
+          <li><strong>Traces</strong> — rastreia uma request por todos os serviços. Ferramentas: Jaeger, Zipkin, OpenTelemetry</li>
+          <li><strong>Alertas</strong> — notificação quando métricas saem do normal (PagerDuty, Opsgenie)</li>
+          <li><strong>SLOs/SLAs</strong> — defina e monitore metas de disponibilidade (99.9% uptime = 8.7h downtime/ano)</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> Containerização</h4>
+        <ul>
+          <li><strong>Docker</strong> — empacota a app com suas dependências. Mesmo comportamento em dev e prod</li>
+          <li><strong>Docker Compose</strong> — orquestra múltiplos serviços localmente</li>
+          <li><strong>Kubernetes (k8s)</strong> — orquestração em produção, auto-scaling, self-healing</li>
+          <li><strong>Dockerfile multi-stage</strong> — build menor e mais seguro</li>
+          <li><strong>Never run as root</strong> — segurança em containers</li>
+        </ul>
+      </div>
+      <div class="content-block">
+        <h4><span class="dot" style="background:var(--accent2)"></span> IaC (Infra como Código)</h4>
+        <ul>
+          <li><strong>Terraform</strong> — provisiona cloud infra de forma declarativa</li>
+          <li><strong>Pulumi</strong> — IaC com linguagens de programação reais</li>
+          <li><strong>AWS CDK / CloudFormation</strong> — específico para AWS</li>
+          <li><strong>Ansible</strong> — configuração de servidores</li>
+          <li><strong>GitOps</strong> — infraestrutura gerenciada via Git (ArgoCD, Flux)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIBE CODING SECTION -->
+<section class="deep-section">
+  <div class="container">
+    <div class="vibe-section">
+      <div class="section-label" style="color:var(--accent2)">Metodologia · Como Usar Tudo Isso</div>
+      <h2 class="section-title">⚡ Vibe Coding Profissional</h2>
+      <p style="color:var(--muted);font-size:16px;max-width:700px;margin-bottom:40px">Vibe coding com IA não é "deixar a IA fazer tudo". É saber orquestrar a IA com contexto rico e decisões arquiteturais conscientes. A qualidade do output é proporcional à qualidade do input.</p>
+
+      <div class="content-grid">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent1)"></span> Fase 1 · Planejamento (Você)</h4>
+          <ul>
+            <li><strong>Escreva o IDEA.md / spec primeiro</strong> — requisitos em linguagem natural antes de qualquer código</li>
+            <li><strong>Defina a arquitetura</strong> antes de escrever código</li>
+            <li><strong>Escreva o schema do banco</strong> primeiro</li>
+            <li><strong>Faça benchmarks antes de decidir</strong> — valide suposições técnicas com dados reais (benchmark-driven development)</li>
+            <li><strong>Escolha o stack</strong> com critério (não com hype). Prototipe em linguagem mais fácil antes de otimizar</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent2)"></span> Fase 2 · Contexto para IA</h4>
+          <ul>
+            <li><strong>CLAUDE.md / AGENTS.md</strong> — mantenha um arquivo com convenções, stack e contexto do projeto. A IA lê isso a cada sessão</li>
+            <li><strong>Mostre a estrutura de pastas</strong> existente antes de pedir código</li>
+            <li><strong>Dê exemplos de código</strong> do mesmo projeto para a IA seguir o padrão</li>
+            <li><strong>Especifique o stack exato</strong> (versões, bibliotecas)</li>
+            <li><strong>Peça testes junto com o código</strong> — sempre. A IA não ignora essa prática quando você exige</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent3)"></span> Fase 3 · Review (Você como Arquiteto)</h4>
+          <ul>
+            <li><strong>Você é o arquiteto, a IA é o dev sênior</strong> — revise toda decisão estrutural</li>
+            <li><strong>Nunca comite código da IA sem revisar</strong> — especialmente commits volumosos</li>
+            <li><strong>Verifique segurança com ferramentas</strong> — Brakeman, Snyk, bundler-audit no CI</li>
+            <li><strong>Cheque over-engineering</strong> — a IA tende a adicionar complexidade desnecessária</li>
+            <li><strong>Entenda o código</strong> — se não entendeu, não está pronto para produção</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent4)"></span> Fase 4 · Commits e Iteração</h4>
+          <ul>
+            <li><strong>Commits pequenos e descritivos</strong> — evite "bug fix" sem contexto. Facilita git bisect quando algo quebra</li>
+            <li><strong>CI em cada commit</strong> — lint + testes rodando em ~22s. Se demorar mais, quebre em jobs paralelos</li>
+            <li><strong>Small releases constantes</strong> — tudo pronto para produção a qualquer momento (XP)</li>
+            <li><strong>Refatore continuamente</strong> — não deixe débito técnico acumular. Testes dão segurança para isso</li>
+            <li><strong>Documente decisões</strong> — ADRs e CLAUDE.md. A IA (e você no futuro) agradece</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIÇÕES DO MUNDO REAL (AKITA) -->
+<section class="deep-section">
+  <div class="container">
+    <div class="section-label">Baseado em Projetos Reais · Blog Akita On Rails 2026</div>
+    <h2 class="section-title">📖 Lições do Mundo Real</h2>
+    <p style="color:var(--muted);font-size:16px;max-width:700px;margin-bottom:48px">Insights extraídos de projetos reais construídos com Vibe Coding intensivo — do zero à produção em dias, com qualidade profissional. Padrões que se repetiram em múltiplos projetos.</p>
+
+    <!-- LIÇÃO 1: IA como estagiário sênior -->
+    <div style="margin-bottom:48px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="background:var(--accent1);color:#fff;font-family:'Space Mono',monospace;font-size:10px;padding:6px 14px;letter-spacing:2px;font-weight:700">LIÇÃO 01</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">A IA é um dev sênior motivado — não um arquiteto</h3>
+      </div>
+      <div class="content-grid">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent1)"></span> O que a IA faz bem</h4>
+          <ul>
+            <li><strong>Gerar boilerplate</strong> rapidamente seguindo padrões estabelecidos</li>
+            <li><strong>Escrever testes</strong> — e faz isso melhor que a maioria dos humanos quando exigido</li>
+            <li><strong>Refatorar código</strong> com instruções claras e contexto suficiente</li>
+            <li><strong>Identificar bugs</strong> óbvios e sugerir correções de segurança</li>
+            <li><strong>Internacionalização, rebranding</strong> e tarefas repetitivas de alto volume</li>
+            <li><strong>Tool calling</strong> — usar ripgrep, grep, LSPs, compiladores para validar o próprio código</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent5)"></span> Onde a IA falha</h4>
+          <ul>
+            <li><strong>Contexto global do projeto</strong> — não enxerga o todo sem você fornecer</li>
+            <li><strong>Over-engineering</strong> — tende a adicionar complexidade desnecessária (Opus, Kimi)</li>
+            <li><strong>Decisões arquiteturais</strong> — simplistas, exigem revisão humana obrigatória</li>
+            <li><strong>Edge cases sutis</strong> — race conditions, bugs de encoding, path handling cross-platform</li>
+            <li><strong>Segurança profunda</strong> — Brakeman captura o que a IA deixa passar</li>
+            <li><strong>Perda de contexto</strong> em conversas longas — CLAUDE.md resolve parcialmente</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout" style="border-color:var(--accent1)">
+        <p><strong>Analogia do Akita:</strong> "A IA age como um estagiário motivado — executa bem o que você pede, mas não substitui o desenvolvedor sênior que define o que deve ser feito, revisa as decisões e detecta o que foi ignorado." Diferentes modelos têm personalidades diferentes: alguns são prolixos (Opus, Kimi), outros mais diretos (GPT Codex), e cada um deixa passar bugs diferentes.</p>
+      </div>
+    </div>
+
+    <!-- LIÇÃO 2: Números reais de projetos -->
+    <div style="margin-bottom:48px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="background:var(--accent2);color:#000;font-family:'Space Mono',monospace;font-size:10px;padding:6px 14px;letter-spacing:2px;font-weight:700">LIÇÃO 02</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">O que números reais de projetos revelam</h3>
+      </div>
+      <table class="tech-table">
+        <thead>
+          <tr>
+            <th>Projeto</th>
+            <th>Tempo</th>
+            <th>Commits</th>
+            <th>Testes</th>
+            <th>Stack</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Clone do Mega (file sharing)</td>
+            <td>1 dia (3h ativas)</td>
+            <td>21 commits</td>
+            <td>210 testes, 24 medidas de segurança</td>
+            <td>Rails 8 + SQLite + Tailwind</td>
+          </tr>
+          <tr>
+            <td>Sistema Newsletter completo</td>
+            <td>6 dias</td>
+            <td>201 commits</td>
+            <td>100% cobertura de linhas</td>
+            <td>Rails + Discord bot + TTS Python</td>
+          </tr>
+          <tr>
+            <td>Sistema Newsletter (v2 + pós-produção)</td>
+            <td>8 dias</td>
+            <td>274 commits</td>
+            <td>1.323 testes (83-87% coverage)</td>
+            <td>Rails + Python + Kamal</td>
+          </tr>
+          <tr>
+            <td>Indexador de imagens com IA</td>
+            <td>2 dias (26h)</td>
+            <td>50 commits</td>
+            <td>338 testes (166 Rust + 172 React)</td>
+            <td>Rust + TypeScript + Tauri</td>
+          </tr>
+          <tr>
+            <td>Editor de Markdown (FrankMD)</td>
+            <td>3 dias (~30h)</td>
+            <td>130+ commits</td>
+            <td>~70% coverage, 18k linhas</td>
+            <td>Rails 8 + HotWire + Tailwind</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout" style="border-color:var(--accent2)">
+        <p><strong>Padrão observado:</strong> Em todos os projetos, a quantidade de linhas de teste foi <strong>igual ou maior</strong> que as linhas de código de produção. Testes não são opcionais no Vibe Coding profissional — são a rede de segurança que permite iterar em velocidade alta sem quebrar o que já funciona.</p>
+      </div>
+    </div>
+
+    <!-- LIÇÃO 3: CI como guardião -->
+    <div style="margin-bottom:48px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="background:var(--accent4);color:#000;font-family:'Space Mono',monospace;font-size:10px;padding:6px 14px;letter-spacing:2px;font-weight:700">LIÇÃO 03</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">CI rodando em cada commit é inegociável</h3>
+      </div>
+      <div class="content-grid">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent4)"></span> Pipeline CI de referência (Rails)</h4>
+          <ul>
+            <li><strong>RuboCop / ESLint</strong> — padrão de código, falha rápida</li>
+            <li><strong>Bundler-Audit</strong> — vulnerabilidades em dependências</li>
+            <li><strong>Brakeman</strong> — análise estática de segurança (SAST)</li>
+            <li><strong>Suíte completa de testes</strong> — todo o conjunto em ~22 segundos</li>
+            <li><strong>SimpleCov</strong> — relatório de cobertura com threshold mínimo</li>
+            <li><strong>GitHub Actions Matrix</strong> — builds e testes em múltiplos OS (Linux, macOS, Windows)</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent4)"></span> O papel do teste regressivo</h4>
+          <ul>
+            <li><strong>Todo bug corrigido ganha um teste</strong> — sem exceções. Evita reincidência</li>
+            <li><strong>Git bisect</strong> — commits pequenos permitem isolar regressões rapidamente</li>
+            <li><strong>Pipeline de integração</strong> separada do CI — roda com dados reais via rsync de produção</li>
+            <li><strong>Preview visual manual</strong> — captura bugs que automação não detecta</li>
+            <li><strong>Health checks</strong> — banco de dados, serviços externos, antes de rodar</li>
+            <li><strong>DevCache</strong> — cache local de chamadas à API para testes sem custo repetido</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIÇÃO 4: Segurança em camadas -->
+    <div style="margin-bottom:48px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="background:var(--accent5);color:#fff;font-family:'Space Mono',monospace;font-size:10px;padding:6px 14px;letter-spacing:2px;font-weight:700">LIÇÃO 04</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">Segurança em 7 camadas — não é paranoia, é profissionalismo</h3>
+      </div>
+      <div class="content-grid">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent5)"></span> O que uma auditoria real cobre</h4>
+          <ul>
+            <li><strong>Rate limiting agressivo + IP banning</strong> (Rack::Attack)</li>
+            <li><strong>Proteção contra race conditions</strong> — updates atômicos no banco (SELECT FOR UPDATE)</li>
+            <li><strong>Sanitização de nomes de arquivos</strong> — path traversal, caracteres especiais</li>
+            <li><strong>Detecção server-side de MIME type</strong> — não confie no Content-Type do cliente</li>
+            <li><strong>TOTP com proteção contra replay attack</strong></li>
+            <li><strong>CSP com nonces aleatórios</strong> por request (não valor estático)</li>
+            <li><strong>Open redirect prevention</strong> — valide destinos antes de redirecionar</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent5)"></span> Segurança de dados em repouso</h4>
+          <ul>
+            <li><strong>Criptografia no ActiveRecord/ORM</strong> — emails e dados sensíveis criptografados no banco</li>
+            <li><strong>AES-256</strong> para dados em repouso em produção</li>
+            <li><strong>Algoritmo determinístico</strong> para campos criptografados que precisam de unicidade (índices)</li>
+            <li><strong>Quota de disco por usuário</strong> — protege contra abuse de armazenamento</li>
+            <li><strong>Limpeza automática assíncrona</strong> — jobs para remover dados expirados</li>
+            <li><strong>Invites únicos e atômicos</strong> — prevenção de race condition no registro</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIÇÃO 5: Padrões de resiliência -->
+    <div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+        <div style="background:var(--accent3);color:#000;font-family:'Space Mono',monospace;font-size:10px;padding:6px 14px;letter-spacing:2px;font-weight:700">LIÇÃO 05</div>
+        <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">Resiliência e recuperação de falhas são features, não extras</h3>
+      </div>
+      <div class="content-grid">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent3)"></span> Padrões de resiliência observados</h4>
+          <ul>
+            <li><strong>Cancelamento cooperativo</strong> (AtomicBool em Rust) — app se recupera de crashes sem perder progresso</li>
+            <li><strong>Scanning incremental</strong> — nunca reprocesse o que já foi feito. Fingerprint SHA-256 para detectar arquivos movidos</li>
+            <li><strong>Cache persistente</strong> — retoma onde parou após interrupção</li>
+            <li><strong>Modo read-only</strong> para diretórios scaneados — preserva dados do usuário</li>
+            <li><strong>Migrações formais de banco</strong> — nunca altera schema manualmente. Garante upgrade seguro</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent3)"></span> Envio de email confiável (at-most-once)</h4>
+          <ul>
+            <li><strong>Estado individual por email</strong> — tabela EmailDelivery com claiming atômico</li>
+            <li><strong>Retry só em erros transitórios</strong> — não reenvia em bounced, rejected ou unknown</li>
+            <li><strong>Backoff polinomial</strong> — evita flood em falhas temporárias do SES</li>
+            <li><strong>Job de recuperação de stale</strong> — emails presos em "sending" por +30min voltam para fila</li>
+            <li><strong>List-Unsubscribe (RFC 8058)</strong> — compliance e proteção de reputação no Gmail</li>
+            <li><strong>Webhooks de reconciliação</strong> — fecha o ciclo via SNS para bounce/complaint</li>
+          </ul>
+        </div>
+      </div>
+      <div class="content-grid" style="margin-top:0">
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent3)"></span> Web Scraping robusto (hierarquia de confiabilidade)</h4>
+          <ul>
+            <li><strong>1. API oficial</strong> — sempre a primeira opção</li>
+            <li><strong>2. RSS/Atom feed</strong> — estável, leve, semântico</li>
+            <li><strong>3. HTML server-rendered</strong> — Nokogiri, parsing direto</li>
+            <li><strong>4. SPA com Headless Browser</strong> — Ferrum + Chromium via CDP</li>
+            <li><strong>5. Sites anti-bot (último recurso)</strong> — injeção de scripts antes da página, mask de propriedades JS</li>
+            <li><strong>Não dependa de seletores CSS</strong> — use heurísticas estruturais (tamanho de URL, agrupamento de links)</li>
+          </ul>
+        </div>
+        <div class="content-block">
+          <h4><span class="dot" style="background:var(--accent3)"></span> Deploy com Kamal (zero-downtime)</h4>
+          <ul>
+            <li><strong>Kamal</strong> — deploy Rails em VPS próprio sem Kubernetes</li>
+            <li><strong>SQLite em produção</strong> — com WAL mode para concorrência. Simples e eficiente para projetos solo/small team</li>
+            <li><strong>Cloudflare Tunnel</strong> — SSL, DDoS protection e roteamento sem abrir portas no servidor</li>
+            <li><strong>Docker multi-stage</strong> — imagem mínima e segura (não roda como root)</li>
+            <li><strong>Deploy em 2 minutos</strong> — hotfix crítico de anti-spam do Gmail deployado em 120 segundos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- STACK RECOMENDADO -->
+
+<section class="deep-section">
+  <div class="container">
+    <div class="section-label">Stack de Referência</div>
+    <h2 class="section-title">Stack Moderno para Vibe Coding</h2>
+    <p style="color:var(--muted);margin-bottom:40px">Um stack coerente e bem documentado funciona melhor com IA — as ferramentas populares têm mais exemplos no training data.</p>
+
+    <table class="tech-table">
+      <thead>
+        <tr>
+          <th>Camada</th>
+          <th>Opção A (Full-stack JS)</th>
+          <th>Opção B (API separada)</th>
+          <th>Propósito</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Frontend</td>
+          <td>Next.js 14+ (App Router)</td>
+          <td>React + Vite</td>
+          <td>Interface do usuário</td>
+        </tr>
+        <tr>
+          <td>Styling</td>
+          <td>Tailwind CSS + shadcn/ui</td>
+          <td>Tailwind CSS + Radix UI</td>
+          <td>Design system componentizado</td>
+        </tr>
+        <tr>
+          <td>Backend</td>
+          <td>Next.js API Routes / Server Actions</td>
+          <td>Node.js + Fastify / Python + FastAPI</td>
+          <td>Lógica de negócio e APIs</td>
+        </tr>
+        <tr>
+          <td>ORM / DB Client</td>
+          <td>Prisma</td>
+          <td>Drizzle / SQLAlchemy</td>
+          <td>Acesso ao banco com type safety</td>
+        </tr>
+        <tr>
+          <td>Banco Principal</td>
+          <td>PostgreSQL (Supabase / Neon)</td>
+          <td>PostgreSQL (RDS)</td>
+          <td>Persistência principal</td>
+        </tr>
+        <tr>
+          <td>Cache</td>
+          <td>Upstash Redis</td>
+          <td>Redis (ElastiCache)</td>
+          <td>Cache, sessões, rate limit</td>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td>Clerk / NextAuth.js</td>
+          <td>Auth0 / Supabase Auth</td>
+          <td>Autenticação e autorização</td>
+        </tr>
+        <tr>
+          <td>Validação</td>
+          <td>Zod</td>
+          <td>Zod / Yup / Pydantic</td>
+          <td>Schema validation end-to-end</td>
+        </tr>
+        <tr>
+          <td>Testes</td>
+          <td>Vitest + Playwright</td>
+          <td>Jest + Playwright</td>
+          <td>Unit, integration e E2E</td>
+        </tr>
+        <tr>
+          <td>CI/CD</td>
+          <td>GitHub Actions</td>
+          <td>GitHub Actions</td>
+          <td>Automação de deploy</td>
+        </tr>
+        <tr>
+          <td>Deploy</td>
+          <td>Vercel / Railway</td>
+          <td>AWS / Fly.io / Render</td>
+          <td>Hosting da aplicação</td>
+        </tr>
+        <tr>
+          <td>Monitoring</td>
+          <td>Sentry + Vercel Analytics</td>
+          <td>Sentry + Datadog / Grafana</td>
+          <td>Erros e observabilidade</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>PIPELINE DE DESENVOLVIMENTO PROFISSIONAL · GUIA COMPLETO · 2026 · COM INSIGHTS DO BLOG AKITA ON RAILS</p>
+  </div>
+</footer>
+
+</body>
+</html>
