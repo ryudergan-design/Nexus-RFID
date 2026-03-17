@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Sell
@@ -398,6 +399,7 @@ private fun DrawerMenuRow(
 private fun iconFor(route: String): ImageVector {
     return when (route) {
         "products" -> Icons.Outlined.Sell
+        "inventory" -> Icons.Outlined.Inventory2
         "global_search" -> Icons.Outlined.Search
         "conferences" -> Icons.Outlined.Description
         "invoice" -> Icons.Outlined.Description
@@ -411,6 +413,7 @@ private fun iconFor(route: String): ImageVector {
 private fun supportTextFor(route: String): String {
     return when (route) {
         "products" -> "Consulta individual de itens"
+        "inventory" -> "Listas e contagens de inventario"
         "global_search" -> "Busca operacional e rastreio"
         "conferences" -> "Expandir nota fiscal e movimentacao"
         "invoice" -> "Conferencia fiscal do recebimento"

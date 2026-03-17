@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 Phase: 3 of 7 (Catalogo e busca global)
 Plan: 0 of 3 in current phase
 Status: Ready to plan
-Last activity: 2026-03-16 - Menu inicial reorganizado com grupo de Conferencias, itens removidos e formas do app zeradas para visual quadrado
+Last activity: 2026-03-16 - Item Inventarios recolocado no drawer entre Produtos e Conferencias, com APK e registro visual atualizados
 
 Progress: [###-------] 30%
 
@@ -53,6 +53,7 @@ Recent decisions affecting current work:
 - [Global]: O projeto passa a manter um historico visual em `registro-visual/`, com pasta inicial completa e futuras mudancas organizadas em `antes/` e `depois/`.
 - [Global]: O registro visual inicial passou a ser gerado por screenshots de preview do Compose, sem dependencia de emulador local.
 - [Global]: O menu inicial agora prioriza `Buscar Produtos`, `Produtos`, `Conferencias`, `Configuracoes` e `Sair`, com submenu expansivel para `Nota Fiscal` e `Movimentacao de Estoque`.
+- [Global]: `Inventarios` voltou ao drawer entre `Produtos` e `Conferencias`.
 - [Global]: O app inteiro passou a usar cantos retos em vez de bordas arredondadas.
 
 ### Pending Todos

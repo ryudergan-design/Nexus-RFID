@@ -64,6 +64,7 @@ object MockDataSource {
     val drawerItems = listOf(
         DrawerMenuItem("Buscar Produtos", "global_search"),
         DrawerMenuItem("Produtos", "products"),
+        DrawerMenuItem("Inventarios", "inventory"),
         DrawerMenuItem(
             label = "Conferencias",
             route = "conferences",
