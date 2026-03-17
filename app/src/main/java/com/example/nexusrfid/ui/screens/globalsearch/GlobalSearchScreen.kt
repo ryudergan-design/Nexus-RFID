@@ -77,7 +77,6 @@ import com.example.nexusrfid.ui.components.AppDialog
 import com.example.nexusrfid.ui.components.AppTopBar
 import com.example.nexusrfid.ui.components.CounterBar
 import com.example.nexusrfid.ui.components.EmptyStateBox
-import com.example.nexusrfid.ui.components.ProximityIndicator
 import com.example.nexusrfid.ui.components.SearchHeader
 import com.example.nexusrfid.ui.components.SearchTypeSheet
 import com.example.nexusrfid.ui.components.SimpleListRow
@@ -165,7 +164,6 @@ fun GlobalSearchScreen(
 
     val counterReadCount = if (isTagMode) readCount else searchSummary.readCount
     val counterFoundCount = if (isTagMode) foundCount else searchSummary.foundCount
-    val leadingTarget = tagTargets.maxByOrNull { it.proximityPercent }
     val soundEnabled = appState?.soundEnabled ?: true
     val readerReady = appState?.let { state ->
         state.connectionState == RfidConnectionState.Connected &&
@@ -262,6 +260,8 @@ fun GlobalSearchScreen(
                     readCount += batch.size
                     var matchFoundInCycle = false
                     val updatedTargets = tagTargets.toMutableList()
+                    val targetSignals = mutableMapOf<Int, Int>()
+                    val targetProductNames = mutableMapOf<Int, String>()
                     batch.forEach { tagRead ->
                         val normalizedEpc = tagRead.epc.normalizedTag()
                         val canonicalEpc = canonicalTag(normalizedEpc)
@@ -273,18 +273,29 @@ fun GlobalSearchScreen(
                             lastSeenAtMillis = now,
                             rssiPercent = percent
                         )
-                        if (percent > 0) {
-                            val matchedIndex = updatedTargets.indexOfFirst { tagsMatch(it.epc, normalizedEpc) }
-                            if (matchedIndex >= 0) {
-                                val existingTarget = updatedTargets[matchedIndex]
-                                matchFoundInCycle = true
-                                updatedTargets[matchedIndex] = existingTarget.copy(
-                                    proximityPercent = maxOf(existingTarget.proximityPercent, percent),
-                                    proximityLabel = proximityLabelFor(percent),
-                                    matchedProductName = matchedProduct?.name ?: existingTarget.matchedProductName,
-                                    lastSeenAtMillis = now
-                                )
+                        val matchedIndex = updatedTargets.indexOfFirst { tagsMatch(it.epc, normalizedEpc) }
+                        if (matchedIndex >= 0) {
+                            matchFoundInCycle = matchFoundInCycle || percent > 0
+                            val current = targetSignals[matchedIndex]
+                            targetSignals[matchedIndex] = if (current == null) {
+                                percent
+                            } else {
+                                maxOf(current, percent)
                             }
+                            if (!matchedProduct?.name.isNullOrBlank()) {
+                                targetProductNames[matchedIndex] = matchedProduct.name
+                            }
+                        }
+                    }
+                    if (targetSignals.isNotEmpty()) {
+                        targetSignals.forEach { (index, percent) ->
+                            val existingTarget = updatedTargets[index]
+                            updatedTargets[index] = existingTarget.copy(
+                                proximityPercent = percent,
+                                proximityLabel = proximityLabelFor(percent),
+                                matchedProductName = targetProductNames[index] ?: existingTarget.matchedProductName,
+                                lastSeenAtMillis = now
+                            )
                         }
                     }
                     tagTargets = updatedTargets
@@ -305,7 +316,7 @@ fun GlobalSearchScreen(
                     }
                 }
                 refreshFoundCount()
-                delay(180)
+                delay(120)
             }
         }
     }
@@ -388,7 +399,6 @@ fun GlobalSearchScreen(
         filteredProducts = filteredProducts,
         matchedProducts = matchedProducts,
         tagTargets = tagTargets,
-        leadingTarget = leadingTarget,
         errorMessage = appState?.errorMessage ?: dialogErrorMessage,
         onReadCountClick = if (isTagMode && readTargets.isNotEmpty()) {
             { showReadTagsDialog = true }
@@ -1498,34 +1508,10 @@ private fun GlobalSearchContent(
     filteredProducts: List<ProductListItem>,
     matchedProducts: List<ProductListItem>,
     tagTargets: List<TagTargetItemUi>,
-    leadingTarget: TagTargetItemUi?,
     errorMessage: String?,
     onReadCountClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    val proximityTitle = if (leadingTarget != null && leadingTarget.proximityPercent > 0) {
-        "Tag mais proxima"
-    } else {
-        "Sinal em tempo real"
-    }
-    val proximityPercent = leadingTarget?.proximityPercent ?: 0
-    val proximityLabel = leadingTarget?.proximityLabel ?: if (readingActive) "Aguardando" else "Pronto"
-    val proximitySupportingText = when {
-        leadingTarget != null && leadingTarget.proximityPercent > 0 -> {
-            buildString {
-                append(leadingTarget.epc)
-                if (!leadingTarget.matchedProductName.isNullOrBlank()) {
-                    append("  |  ")
-                    append(leadingTarget.matchedProductName)
-                }
-            }
-        }
-
-        tagTargets.isEmpty() -> "Adicione as tags alvo e toque em Iniciar."
-        readingActive -> "Mantenha o coletor em movimento ate a proximidade subir."
-        else -> "Conecte o coletor e use Iniciar para comecar a localizacao."
-    }
-
     val baseBackground = AppColors.ScreenBackground
     var showPowerDialog by remember { mutableStateOf(false) }
 
@@ -1588,17 +1574,6 @@ private fun GlobalSearchContent(
                             TagTargetList(
                                 items = tagTargets,
                                 onRemove = onRemoveTag
-                            )
-                        }
-                    }
-
-                    if (tagTargets.isNotEmpty() || readingActive) {
-                        item {
-                            ProximityIndicator(
-                                title = proximityTitle,
-                                percent = proximityPercent,
-                                label = proximityLabel,
-                                supportingText = proximitySupportingText
                             )
                         }
                     }
