@@ -96,6 +96,8 @@ import kotlinx.coroutines.withContext
 
 private const val ProductSearchTypeKey = "product"
 private const val TagSearchTypeKey = "tag"
+private const val TagExpectedLength = 20
+private const val TagSuffixPadding = "0000"
 
 @Composable
 fun GlobalSearchScreen(
@@ -231,7 +233,7 @@ fun GlobalSearchScreen(
     fun addTagTarget(rawValue: String) {
         val normalizedTag = rawValue.normalizedTag()
         when {
-            !isValidTagLength(normalizedTag) -> dialogErrorMessage = "A tag precisa ter 20 ou 24 caracteres."
+            !isValidTagLength(normalizedTag) -> dialogErrorMessage = "A tag precisa ter 20 caracteres."
             tagTargets.any { tagsMatch(it.epc, normalizedTag) } -> dialogErrorMessage = "Essa tag ja foi adicionada."
             else -> {
                 tagTargets = tagTargets + TagTargetItemUi(
@@ -262,10 +264,11 @@ fun GlobalSearchScreen(
                     val updatedTargets = tagTargets.toMutableList()
                     batch.forEach { tagRead ->
                         val normalizedEpc = tagRead.epc.normalizedTag()
+                        val canonicalEpc = canonicalTag(normalizedEpc)
                         val percent = rssiToPercent(tagRead.rssi)
                         val matchedProduct = products.firstOrNull { tagsMatch(it.tagCode, normalizedEpc) }
-                        readTagRegistry[normalizedEpc] = ReadTagItemUi(
-                            epc = normalizedEpc,
+                        readTagRegistry[canonicalEpc] = ReadTagItemUi(
+                            epc = canonicalEpc,
                             matchedProductName = matchedProduct?.name,
                             lastSeenAtMillis = now,
                             rssiPercent = percent
@@ -605,7 +608,7 @@ private fun TagCommandCard(
                     )
                 }
                 Text(
-                    text = "EPC 20/24",
+                    text = "EPC 20",
                     style = MaterialTheme.typography.labelLarge,
                     color = AppColors.TopBarBlue
                 )
@@ -1340,18 +1343,37 @@ private fun String.normalizedTag(): String {
 }
 
 private fun isValidTagLength(value: String): Boolean {
-    return value.length == 20 || value.length == 24
+    return value.length == TagExpectedLength
+}
+
+private fun canonicalTag(value: String): String {
+    val normalized = value.normalizedTag()
+    return if (normalized.length == TagExpectedLength + TagSuffixPadding.length &&
+        normalized.endsWith(TagSuffixPadding)
+    ) {
+        normalized.dropLast(TagSuffixPadding.length)
+    } else {
+        normalized
+    }
 }
 
 private fun tagVariants(value: String): Set<String> {
     val normalized = value.normalizedTag()
+    if (normalized.isBlank()) return emptySet()
     val variants = mutableSetOf(normalized)
-    if (normalized.length == 20) {
-        variants.add(normalized.padStart(24, '0'))
-    } else if (normalized.length == 24) {
-        val trimmed = normalized.trimStart('0')
-        if (trimmed.length == 20) {
-            variants.add(trimmed)
+    if (normalized.length == TagExpectedLength) {
+        variants.add(normalized.padStart(TagExpectedLength + TagSuffixPadding.length, '0'))
+        variants.add(normalized + TagSuffixPadding)
+    } else if (normalized.length == TagExpectedLength + TagSuffixPadding.length) {
+        val trimmedStart = normalized.trimStart('0')
+        if (trimmedStart.length == TagExpectedLength) {
+            variants.add(trimmedStart)
+        }
+        if (normalized.endsWith(TagSuffixPadding)) {
+            val trimmedEnd = normalized.dropLast(TagSuffixPadding.length)
+            if (trimmedEnd.length == TagExpectedLength) {
+                variants.add(trimmedEnd)
+            }
         }
     }
     return variants
@@ -1366,10 +1388,13 @@ private fun tagsMatch(left: String, right: String): Boolean {
 
 private fun rssiToPercent(rssi: Int?): Int {
     val value = rssi ?: return 0
-    return if (value in 0..100) {
-        value
-    } else {
-        (((value + 80f) / 45f) * 100f).toInt().coerceIn(0, 100)
+    return when {
+        value in 0..100 -> value
+        value < 0 -> {
+            val clamped = value.coerceIn(-120, -30)
+            (((clamped + 120f) / 90f) * 100f).toInt().coerceIn(0, 100)
+        }
+        else -> 100
     }
 }
 

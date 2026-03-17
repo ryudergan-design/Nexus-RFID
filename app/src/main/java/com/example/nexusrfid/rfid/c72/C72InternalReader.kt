@@ -79,7 +79,7 @@ class C72InternalReader(
                 tags.add(
                     RfidTagRead(
                         epc = info.epc.orEmpty(),
-                        rssi = info.rssi?.toIntOrNull(),
+                        rssi = info.rssi.extractRssiValue(),
                         tid = info.tid,
                         seenAtMillis = System.currentTimeMillis()
                     )
@@ -93,5 +93,14 @@ class C72InternalReader(
     override fun release() {
         runCatching { reader?.stopInventory() }
         runCatching { reader?.free() }
+    }
+
+    private fun String?.extractRssiValue(): Int? {
+        if (this.isNullOrBlank()) return null
+        return Regex("-?\\d+(?:\\.\\d+)?")
+            .find(this)
+            ?.value
+            ?.toFloatOrNull()
+            ?.toInt()
     }
 }
