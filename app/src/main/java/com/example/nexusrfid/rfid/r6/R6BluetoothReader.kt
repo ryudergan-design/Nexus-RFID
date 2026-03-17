@@ -1,6 +1,7 @@
 package com.example.nexusrfid.rfid.r6
 
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.rfid.RfidDevice
@@ -31,13 +32,12 @@ class R6BluetoothReader(
 
     override fun startScan(onDeviceFound: (RfidDevice) -> Unit) {
         statusListener?.invoke(RfidConnectionState.Scanning, null)
-        reader.stopScanBTDevices()
-        reader.scanBTDevices { bluetoothDevice, rssi, _ ->
-            // Filtro de proximidade: apenas dispositivos com sinal forte (acoplados)
-            if (bluetoothDevice != null && rssi >= -50) {
-                onDeviceFound(bluetoothDevice.toRfidDevice(rssi))
-            }
+        val adapter = appContext.getSystemService(BluetoothManager::class.java)?.adapter
+        val bondedDevices = adapter?.bondedDevices.orEmpty()
+        bondedDevices.forEach { device ->
+            onDeviceFound(device.toRfidDevice())
         }
+        statusListener?.invoke(RfidConnectionState.Idle, null)
     }
 
     override fun stopScan() {

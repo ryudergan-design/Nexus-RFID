@@ -22,13 +22,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.TextStyle
 
 @Composable
 fun ActionButtonPrimary(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    textStyle: TextStyle = MaterialTheme.typography.labelLarge
 ) {
     Button(
         onClick = onClick,
@@ -61,7 +63,7 @@ fun ActionButtonPrimary(
         ) {
             Text(
                 text = text.uppercase(),
-                style = MaterialTheme.typography.labelLarge
+                style = textStyle
             )
         }
     }

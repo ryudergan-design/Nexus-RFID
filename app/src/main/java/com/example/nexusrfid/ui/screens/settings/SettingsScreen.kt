@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -85,7 +86,7 @@ fun SettingsScreen(
         if (RfidPermissionGateway.isBluetoothEnabled(context)) {
             appState.startR6Discovery()
         } else {
-            appState.reportError("Ative o Bluetooth para buscar leitores ativos.")
+            appState.reportError("Ative o Bluetooth para listar leitores pareados.")
         }
     }
 
@@ -99,20 +100,25 @@ fun SettingsScreen(
                 enableBluetoothLauncher.launch(RfidPermissionGateway.bluetoothEnableIntent())
             }
         } else {
-            appState.reportError("Permita Bluetooth e localizacao para buscar leitores ativos.")
+            appState.reportError("Permita Bluetooth para listar leitores pareados.")
         }
     }
 
-    fun startR6Flow() {
+    fun startDeviceDiscovery() {
         appState.clearErrorMessage()
-        val missing = RfidPermissionGateway.missingPermissions(context)
-        when {
-            missing.isNotEmpty() -> permissionLauncher.launch(missing)
-            !RfidPermissionGateway.isBluetoothEnabled(context) -> {
-                enableBluetoothLauncher.launch(RfidPermissionGateway.bluetoothEnableIntent())
+        when (appState.selectedCollectorModel) {
+            CollectorModel.R6 -> {
+                val missing = RfidPermissionGateway.missingPermissions(context)
+                when {
+                    missing.isNotEmpty() -> permissionLauncher.launch(missing)
+                    !RfidPermissionGateway.isBluetoothEnabled(context) -> {
+                        enableBluetoothLauncher.launch(RfidPermissionGateway.bluetoothEnableIntent())
+                    }
+                    else -> appState.startR6Discovery()
+                }
             }
-
-            else -> appState.startR6Discovery()
+            CollectorModel.MC339U -> appState.startR6Discovery()
+            CollectorModel.C72 -> Unit
         }
     }
 
@@ -129,7 +135,7 @@ fun SettingsScreen(
         errorMessage = appState.errorMessage,
         onCollectorModelSelected = appState::selectCollectorModel,
         onSoundChange = appState::updateSoundEnabled,
-        onStartR6Flow = ::startR6Flow,
+        onStartDeviceDiscovery = ::startDeviceDiscovery,
         onStopDeviceScan = appState::stopDeviceScan,
         onConnectDevice = appState::connectToR6,
         onConnectInternalCollector = appState::connectInternalCollector,
@@ -154,7 +160,7 @@ fun SettingsScreenPreviewContent(
     errorMessage: String?,
     onCollectorModelSelected: (CollectorModel) -> Unit,
     onSoundChange: (Boolean) -> Unit,
-    onStartR6Flow: () -> Unit,
+    onStartDeviceDiscovery: () -> Unit,
     onStopDeviceScan: () -> Unit,
     onConnectDevice: (RfidDevice) -> Unit,
     onConnectInternalCollector: () -> Unit,
@@ -168,14 +174,32 @@ fun SettingsScreenPreviewContent(
     var showCollectorPicker by remember { mutableStateOf(false) }
     var showDevicePicker by remember { mutableStateOf(false) }
     val deviceAvailabilityMessage = when {
-        isSearchingDevices -> "Buscando leitores ativos..."
-        availableDevices.isEmpty() -> "Nenhum leitor ativo encontrado."
-        availableDevices.size == 1 -> "1 leitor ativo encontrado."
-        else -> "${availableDevices.size} leitores ativos encontrados."
+        isSearchingDevices -> "Buscando leitores disponiveis..."
+        availableDevices.isEmpty() -> {
+            if (selectedCollectorModel == CollectorModel.R6) {
+                "Nenhum leitor pareado encontrado."
+            } else {
+                "Nenhum leitor disponivel encontrado."
+            }
+        }
+        availableDevices.size == 1 -> {
+            if (selectedCollectorModel == CollectorModel.R6) {
+                "1 leitor pareado pronto para conectar."
+            } else {
+                "1 leitor disponivel encontrado."
+            }
+        }
+        else -> {
+            if (selectedCollectorModel == CollectorModel.R6) {
+                "${availableDevices.size} leitores pareados prontos para conectar."
+            } else {
+                "${availableDevices.size} leitores disponiveis encontrados."
+            }
+        }
     }
 
     fun openDevicePicker() {
-        onStartR6Flow()
+        onStartDeviceDiscovery()
         showDevicePicker = true
     }
 
@@ -223,7 +247,7 @@ fun SettingsScreenPreviewContent(
             item {
                 SettingsSectionCard(
                     eyebrow = "COLETOR",
-                    title = "Modelo em uso"
+                    title = "Modelo RFID"
                 ) {
                     Text(
                         text = "Toque na barra abaixo para selecionar o modelo do coletor.",
@@ -299,7 +323,7 @@ fun SettingsScreenPreviewContent(
                     ) {
                         Text(
                             text = if (selectedCollectorModel == CollectorModel.R6) {
-                                "Toque na caixa abaixo para listar leitores Bluetooth ativos."
+                                "Toque na caixa abaixo para listar leitores Bluetooth pareados."
                             } else {
                                 "Toque na caixa abaixo para inicializar o servico Zebra."
                             },
@@ -310,9 +334,9 @@ fun SettingsScreenPreviewContent(
                         DevicePickerField(
                             value = connectedDevice?.displayName,
                             placeholder = if (isSearchingDevices) {
-                                if (selectedCollectorModel == CollectorModel.R6) "Buscando leitores..." else "Iniciando servico..."
+                                if (selectedCollectorModel == CollectorModel.R6) "Listando leitores pareados..." else "Iniciando servico..."
                             } else {
-                                if (selectedCollectorModel == CollectorModel.R6) "Buscar leitores ativos" else "Abrir servico Zebra"
+                                if (selectedCollectorModel == CollectorModel.R6) "Listar leitores pareados" else "Abrir servico Zebra"
                             },
                             onClick = ::openDevicePicker
                         )
@@ -353,7 +377,9 @@ fun SettingsScreenPreviewContent(
                                 else -> "Conectar C72"
                             },
                             onClick = onConnectInternalCollector,
-                            enabled = !isConnected && !isConnecting
+                            enabled = !isConnected && !isConnecting,
+                            modifier = Modifier.height(56.dp),
+                            textStyle = MaterialTheme.typography.titleSmall.copy(fontSize = 14.sp)
                         )
                         if (isConnected) {
                             ActionButtonOutline(
@@ -610,7 +636,7 @@ private fun CollectorPickerField(
             color = AppColors.TextPrimary
         )
         Icon(
-            imageVector = Icons.Outlined.Search,
+            imageVector = Icons.Outlined.KeyboardArrowDown,
             contentDescription = null,
             tint = AppColors.TextSecondary
         )
@@ -640,13 +666,13 @@ private fun DevicePickerDialog(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
             ) {
                 Text(
-                    text = "LEITORES BLUETOOTH",
+                    text = "LEITORES DISPONIVEIS",
                     style = MaterialTheme.typography.labelLarge,
                     color = AppColors.BrandSignalBlue
                 )
                 Text(
                     text = if (isSearching) {
-                        "Buscando leitores ativos no ambiente..."
+                        "Buscando leitores disponiveis..."
                     } else {
                         "Selecione um leitor disponivel para conexao."
                     },
@@ -663,9 +689,9 @@ private fun DevicePickerDialog(
                     ) {
                         Text(
                             text = if (isSearching) {
-                                "Sincronizando frequencias..."
+                                "Sincronizando leitores..."
                             } else {
-                                "Nenhum leitor detectado."
+                                "Nenhum leitor disponivel."
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = AppColors.TextSecondary,
@@ -1071,7 +1097,7 @@ private fun SettingsScreenPreview() {
             errorMessage = null,
             onCollectorModelSelected = {},
             onSoundChange = {},
-            onStartR6Flow = {},
+            onStartDeviceDiscovery = {},
             onStopDeviceScan = {},
             onConnectDevice = {},
             onConnectInternalCollector = {},

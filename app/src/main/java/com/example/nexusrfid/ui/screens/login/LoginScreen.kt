@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,8 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
@@ -80,15 +84,22 @@ fun LoginScreen(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(AppColors.ScreenBackground)
     ) {
+        val compactHeight = maxHeight < 640.dp
+        val horizontalPadding = if (maxWidth < 360.dp) 20.dp else 28.dp
+        val topPadding = if (compactHeight) 28.dp else 52.dp
+        val headerSpacing = if (compactHeight) AppSpacing.md else AppSpacing.lg
+        val sectionSpacing = if (compactHeight) 24.dp else 32.dp
+        val gradientHeight = if (compactHeight) 240.dp else 320.dp
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(gradientHeight)
                 .align(Alignment.TopCenter)
                 .background(
                     Brush.verticalGradient(
@@ -104,7 +115,9 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .padding(horizontal = 28.dp, vertical = 52.dp),
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .padding(horizontal = horizontalPadding, vertical = topPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -117,13 +130,13 @@ fun LoginScreen(
                 color = AppColors.BrandSignalBlue
             )
 
-            Spacer(modifier = Modifier.height(AppSpacing.lg))
+            Spacer(modifier = Modifier.height(headerSpacing))
 
             NexusRfidBrandLockup(
                 subtitle = "Operacao segura para leitura e inventario"
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(sectionSpacing))
 
             Card(
                 modifier = Modifier

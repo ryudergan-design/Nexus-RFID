@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Ecosystem Design System</title>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        background: '#030712', 
+                        primary: '#3b82f6', // blue-500
+                    },
+                    boxShadow: {
+                        'glow-primary': '0 0 25px rgba(59,130,246,0.35)',
+                        'glow-cyan': '0 0 18px rgba(34,211,238,0.18)',
+                        'glow-amber': '0 0 18px rgba(245,158,11,0.18)',
+                        'glow-fuchsia': '0 0 18px rgba(217,70,239,0.18)',
+                        'glow-emerald': '0 0 18px rgba(16,185,129,0.18)',
+                        'glow-red': '0 0 18px rgba(239,68,68,0.18)',
+                        'neon-cyan': '0 0 8px #22d3ee',
+                        'neon-amber': '0 0 8px #f59e0b',
+                        'neon-fuchsia': '0 0 8px #d946ef',
+                        'neon-emerald': '0 0 8px #34d399',
+                        'neon-red': '0 0 8px #ef4444',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        body {
+            background-color: #030712;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        .nexus-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: 
+                radial-gradient(circle at top, rgba(59,130,246,0.15), transparent 30%),
+                radial-gradient(circle at 82% 18%, rgba(34,211,238,0.10), transparent 22%);
+            background-color: #030712;
+        }
+        
+        .nexus-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.06;
+            background-image: linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up { animation: fadeUp 0.5s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div class="nexus-bg"></div>
+    <div class="nexus-grid"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const ColorSwatch = ({ name, hex, tailwind, border = false, glowClass = '' }) => (
+            <div className={`p-4 rounded-2xl relative overflow-hidden group ${border ? 'border border-white/10' : ''}`} style={{ backgroundColor: hex }}>
+                {glowClass && <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 shadow-${glowClass}`} style={{ mixBlendMode: 'screen' }}></div>}
+                <div className="relative z-10">
+                    <div className="text-sm font-bold text-white mix-blend-difference">{name}</div>
+                    <div className="text-xs text-white/70 font-mono mt-1 mix-blend-difference">{tailwind}</div>
+                    <div className="text-xs text-white/50 font-mono mix-blend-difference">{hex}</div>
+                </div>
+            </div>
+        );
+
+        const GradientCard = ({ name, tailwind, borderClass }) => (
+            <div className={`h-32 rounded-3xl relative overflow-hidden flex items-end p-4 border ${borderClass} ${tailwind}`}>
+                <div className="text-xs font-mono text-white/80 font-bold bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+                    {name}
+                </div>
+            </div>
+        );
+
+        const SectionIdentity = () => (
+            <div className="space-y-8 animate-fade-up">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-white mb-2">1. Padrão Nexus Ecosystem</h2>
+                    <p className="text-white/60 text-lg">Guia genérico de componentes visuais para aplicação em qualquer projeto corporativo da suíte Nexus.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="glass-card rounded-3xl p-6">
+                        <h4 className="text-cyan-300 font-black uppercase tracking-[0.15em] text-xs mb-4">Regras Visuais Globais</h4>
+                        <ul className="space-y-3 text-sm text-white/70">
+                            <li className="flex gap-2"><span className="text-cyan-400">01.</span> <strong>Múltiplos Espectros Semânticos:</strong> A paleta é funcional. O espectro Cyan dita a navegação base, enquanto Amber, Fuchsia e Emerald ditam o estado dos dados.</li>
+                            <li className="flex gap-2"><span className="text-cyan-400">02.</span> <strong>Profundidade Glassmórfica:</strong> Evite fundos sólidos nos painéis. Todo bloco de conteúdo deve utilizar um grau de transparência e blur, sobreposto ao grid do fundo.</li>
+                            <li className="flex gap-2"><span className="text-cyan-400">03.</span> <strong>Efeitos Neon e Glows:</strong> O estilo high-tech exige que elevações, indicadores e hovers sejam representados por emissões de luz colorida (Neon/Glows), e NUNCA por sombras pretas convencionais.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SectionColors = () => (
+            <div className="space-y-12 animate-fade-up">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-white mb-2">2. Espectro Semântico e Uso</h2>
+                    <p className="text-white/60 mb-6">Guia de aplicação de cores independente de um produto específico.</p>
+                </div>
+
+                {/* Base */}
+                <div className="space-y-4">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/40">Canvas e Vidros</h3>
+                    <p className="text-sm text-white/50 mb-2">Usado estruturalmente para fundos, modais e containers neutros.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Base Escura" hex="#030712" tailwind="bg-[#030712]" border />
+                        <ColorSwatch name="Painel Padrão" hex="rgba(255,255,255,0.04)" tailwind="bg-white/[0.04]" border />
+                        <ColorSwatch name="Painel Destaque" hex="rgba(255,255,255,0.08)" tailwind="bg-white/[0.08]" border />
+                        <ColorSwatch name="Borda Translúcida" hex="rgba(255,255,255,0.10)" tailwind="border-white/10" border />
+                    </div>
+                </div>
+
+                {/* Core System */}
+                <div className="space-y-4 mt-8">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-cyan-400/50">Fluxo Primário (Ação & Sistema)</h3>
+                    <p className="text-sm text-white/50 mb-2">O padrão para navegação, botões primários, links, ícones neutros e elementos de interface gerais. É a "cor padrão" da marca Nexus.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Ação Forte" hex="#3b82f6" tailwind="bg-primary / blue-500" glowClass="glow-primary" />
+                        <ColorSwatch name="Destaque Neon" hex="#22d3ee" tailwind="cyan-400" glowClass="neon-cyan" />
+                        <ColorSwatch name="Texto Primário" hex="#67e8f9" tailwind="cyan-300" />
+                        <ColorSwatch name="Fundo Suave" hex="#a5f3fc" tailwind="cyan-200" />
+                    </div>
+                </div>
+
+                {/* Processing */}
+                <div className="space-y-4 mt-8">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-amber-500/50">Atenção & Pendência</h3>
+                    <p className="text-sm text-white/50 mb-2">Usado em itens que requerem ação do usuário, filas de processamento, itens pendentes ou estados de transição ("aguardando").</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Aviso Forte" hex="#f59e0b" tailwind="amber-500" glowClass="neon-amber" />
+                        <ColorSwatch name="Alerta" hex="#fbbf24" tailwind="amber-400" />
+                        <ColorSwatch name="Texto Alerta" hex="#fcd34d" tailwind="amber-300" />
+                        <ColorSwatch name="Fundo Alerta" hex="#fde68a" tailwind="amber-200" />
+                    </div>
+                </div>
+
+                {/* Magic & Automation */}
+                <div className="space-y-4 mt-8">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-fuchsia-500/50">Automação & Processos Ocultos</h3>
+                    <p className="text-sm text-white/50 mb-2">Sempre que o sistema executar uma ação automatizada, agrupamento inteligente ou exibir funcionalidades rodando em segundo plano sem ação direta do usuário.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Automação Forte" hex="#a855f7" tailwind="purple-500" glowClass="neon-fuchsia" />
+                        <ColorSwatch name="Processamento" hex="#d946ef" tailwind="fuchsia-500" glowClass="neon-fuchsia" />
+                        <ColorSwatch name="Texto Processamento" hex="#f0abfc" tailwind="fuchsia-300" />
+                        <ColorSwatch name="Fundo Processamento" hex="#f5d0fe" tailwind="fuchsia-200" />
+                    </div>
+                </div>
+
+                {/* Success & Finished */}
+                <div className="space-y-4 mt-8">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-500/50">Conclusão & Sucesso</h3>
+                    <p className="text-sm text-white/50 mb-2">Indicadores de fluxo concluído com sucesso, metas atingidas, ritmo saudável e estados de aprovação.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Sucesso Forte" hex="#10b981" tailwind="emerald-500" glowClass="neon-emerald" />
+                        <ColorSwatch name="Conclusão" hex="#34d399" tailwind="emerald-400" />
+                        <ColorSwatch name="Texto Sucesso" hex="#6ee7b7" tailwind="emerald-300" />
+                        <ColorSwatch name="Fundo Sucesso" hex="#14b8a6" tailwind="teal-500" />
+                    </div>
+                </div>
+
+                 {/* Errors Colors */}
+                 <div className="space-y-4 mt-8">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-red-500/50">Erros & Ações Destrutivas</h3>
+                    <p className="text-sm text-white/50 mb-2">Violações de regra, falhas de sistema, zonas de perigo (deleção de dados) e alertas críticos.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <ColorSwatch name="Erro Crítico" hex="#ef4444" tailwind="red-500" glowClass="neon-red" />
+                        <ColorSwatch name="Texto Erro" hex="#fca5a5" tailwind="red-300" />
+                        <ColorSwatch name="Fundo Erro" hex="#fecaca" tailwind="red-200" />
+                        <ColorSwatch name="Painel Erro" hex="rgba(239, 68, 68, 0.1)" tailwind="bg-red-500/10" border />
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SectionGradients = () => (
+            <div className="space-y-12 animate-fade-up">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-white mb-2">3. Gradientes e Efeitos Neon</h2>
+                    <p className="text-white/60 mb-6">A identidade visual Nexus depende massivamente de emissões de luz e gradientes em vez de cores sólidas chapadas.</p>
+                </div>
+
+                <div className="mt-8">
+                    <h3 className="text-lg font-bold text-white mb-4">Emissão de Luzes (Glows em Áreas Maiores)</h3>
+                    <p className="text-sm text-white/50 mb-6 font-mono">Aplique essas sombras translúcidas (opacidade ~18% a 35%) em modais, botões grandes e fundos de ícones destacados.</p>
+                    <div className="flex flex-wrap gap-8">
+                        <div className="w-24 h-24 rounded-2xl bg-primary shadow-glow-primary flex items-center justify-center text-[10px] font-mono font-bold text-white text-center p-2 border border-blue-400/30">Primary<br/>Glow</div>
+                        <div className="w-24 h-24 rounded-full border border-cyan-400/20 bg-cyan-400/10 shadow-glow-cyan flex items-center justify-center text-[10px] font-mono font-bold text-cyan-200 text-center p-2">Cyan<br/>Glow</div>
+                        <div className="w-24 h-24 rounded-full border border-fuchsia-400/20 bg-fuchsia-400/10 shadow-glow-fuchsia flex items-center justify-center text-[10px] font-mono font-bold text-fuchsia-200 text-center p-2">Fuchsia<br/>Glow</div>
+                        <div className="w-24 h-24 rounded-full border border-amber-400/20 bg-amber-400/10 shadow-glow-amber flex items-center justify-center text-[10px] font-mono font-bold text-amber-200 text-center p-2">Amber<br/>Glow</div>
+                        <div className="w-24 h-24 rounded-full border border-emerald-400/20 bg-emerald-400/10 shadow-glow-emerald flex items-center justify-center text-[10px] font-mono font-bold text-emerald-200 text-center p-2">Emerald<br/>Glow</div>
+                    </div>
+                </div>
+
+                <div className="mt-12">
+                    <h3 className="text-lg font-bold text-white mb-4">Efeito Neon (Luz Intensa e Focada)</h3>
+                    <p className="text-sm text-white/50 mb-6 font-mono">Aplique o boxShadow neon (ex: `shadow-[0_0_8px_#22d3ee]`) em pequenos "dots" sinalizadores para simular LEDs acesos no painel.</p>
+                    <div className="glass-card rounded-3xl p-8 flex flex-wrap gap-8 items-center bg-[#030712]">
+                         <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-cyan-400 shadow-neon-cyan"></span>
+                            <span className="text-sm font-mono text-cyan-400">Cyan Neon</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-amber-400 shadow-neon-amber"></span>
+                            <span className="text-sm font-mono text-amber-400">Amber Neon</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-fuchsia-400 shadow-neon-fuchsia"></span>
+                            <span className="text-sm font-mono text-fuchsia-400">Fuchsia Neon</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-emerald-400 shadow-neon-emerald"></span>
+                            <span className="text-sm font-mono text-emerald-400">Emerald Neon</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <span className="w-3 h-3 rounded-full bg-red-500 shadow-neon-red"></span>
+                            <span className="text-sm font-mono text-red-500">Red Neon</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-12">
+                    <h3 className="text-lg font-bold text-white mb-4">Gradientes de Superfície Glass</h3>
+                    <p className="text-sm text-white/50 mb-6 font-mono">Sempre utilize um fundo transparente (via-transparent) para não quebrar o backdrop-blur.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <GradientCard 
+                            name="Gradiente Primário (Sistema Base)" 
+                            tailwind="bg-gradient-to-br from-cyan-500/20 via-sky-500/10 to-blue-500/5" 
+                            borderClass="border-cyan-400/20"
+                        />
+                        <GradientCard 
+                            name="Gradiente de Automação" 
+                            tailwind="bg-gradient-to-br from-violet-500/20 via-fuchsia-500/10 to-blue-500/5" 
+                            borderClass="border-fuchsia-400/20"
+                        />
+                        <GradientCard 
+                            name="Gradiente de Sucesso" 
+                            tailwind="bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-cyan-500/5" 
+                            borderClass="border-emerald-400/20"
+                        />
+                        <GradientCard 
+                            name="Gradiente de Pendência" 
+                            tailwind="bg-gradient-to-br from-amber-400/25 to-orange-500/10" 
+                            borderClass="border-amber-400/20"
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SectionTypography = () => (
+            <div className="space-y-12 animate-fade-up">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-white mb-2">4. Padrão Tipográfico</h2>
+                    <p className="text-white/60">Contraste drástico entre blocos densos de título e metadados muito espaçados.</p>
+                </div>
+                
+                <div className="glass-card rounded-3xl p-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 border-b border-white/10 pb-6">
+                        <div className="text-white/40 text-xs font-mono mb-2 md:mb-0">Headings (Destaque)<br/>text-5xl font-black<br/>tracking-[-0.02em]</div>
+                        <div className="col-span-3 text-5xl font-black leading-[1.02] tracking-[-0.02em] text-white">
+                            Título Principal de Impacto na Página.
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 border-b border-white/10 pb-6">
+                        <div className="text-white/40 text-xs font-mono mb-2 md:mb-0">Sessões / Cards<br/>text-base font-black</div>
+                        <div className="col-span-3 text-base font-black text-white">
+                            Título de Sessão ou Agrupamento
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 border-b border-white/10 pb-6">
+                        <div className="text-white/40 text-xs font-mono mb-2 md:mb-0">Labels / Meta<br/>text-[10px] font-black<br/>uppercase tracking-[0.24em]</div>
+                        <div className="col-span-3">
+                            <span className="text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200 block mb-2">
+                                LABEL DE MÓDULO PRIMÁRIO
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200 block mb-2">
+                                STATUS DE ALERTA OU FILA
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-fuchsia-200 block">
+                                TAG DE PROCESSAMENTO AUTOMÁTICO
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-4">
+                        <div className="text-white/40 text-xs font-mono mb-2 md:mb-0">Corpo (Leitura)<br/>text-base text-white/60</div>
+                        <div className="col-span-3 text-base leading-8 text-white/60">
+                            Texto de descrição utilizado para apoiar títulos grandes, explicando funcionalidades ou exibindo descrições longas sem sobrecarregar a leitura visual do usuário.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const SectionComponents = () => (
+            <div className="space-y-12 animate-fade-up">
+                <div>
+                    <h2 className="text-3xl font-black tracking-tight text-white mb-2">5. Base de Componentes</h2>
+                    <p className="text-white/60">Como montar os botões, chips e painéis aplicando as regras de Neon e Glassmorphism.</p>
+                </div>
+
+                {/* Botões */}
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-4">Botões de Ação com Glow</h3>
+                    <div className="glass-card rounded-3xl p-8 flex flex-wrap gap-6 items-center bg-[#030712]">
+                        <button className="h-14 rounded-2xl bg-gradient-to-br from-primary to-cyan-400 px-6 text-sm font-black uppercase tracking-[0.18em] text-white shadow-glow-primary transition-transform hover:scale-105">
+                            Ação Principal
+                        </button>
+                        <button className="h-14 rounded-2xl border border-white/10 bg-white/5 px-6 text-sm font-black uppercase tracking-[0.18em] text-white/80 backdrop-blur-xl hover:bg-white/10 hover:text-white transition-all">
+                            Ação Secundária
+                        </button>
+                    </div>
+                </div>
+
+                {/* Badges / Chips Cyber */}
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-4">Badges de Status (Com Pontos Neon)</h3>
+                    <p className="text-sm text-white/50 mb-6 font-mono">Observe a emissão de luz de 8px diretamente na cor sólida dentro da badge translúcida.</p>
+                    <div className="glass-card rounded-3xl p-8 flex flex-wrap gap-4 items-center bg-[#030712]">
+                        {/* Cyan */}
+                        <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-cyan-200 shadow-glow-cyan">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-neon-cyan"></span>
+                            Badge Primária
+                        </span>
+                        
+                        {/* Amber */}
+                        <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-amber-200 shadow-glow-amber">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-neon-amber"></span>
+                            Badge Pendência
+                        </span>
+
+                        {/* Purple/Fuchsia */}
+                        <span className="inline-flex items-center gap-2 rounded-full border border-fuchsia-400/20 bg-fuchsia-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-fuchsia-200 shadow-glow-fuchsia">
+                            <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 shadow-neon-fuchsia"></span>
+                            Badge Automação
+                        </span>
+
+                        {/* Emerald */}
+                        <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-200 shadow-glow-emerald">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-neon-emerald"></span>
+                            Badge Sucesso
+                        </span>
+                    </div>
+                </div>
+
+                {/* Cards Glass Complexos */}
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-4">Modelos de Painéis Semânticos</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        {/* Card Cyan */}
+                        <div className="rounded-[1.6rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-cyan-400/25 hover:bg-white/[0.06] group cursor-pointer relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 via-sky-500/10 to-blue-500/5 text-cyan-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                            </div>
+                            <h3 className="text-base font-black text-white relative z-10">Módulo Base (Sistema)</h3>
+                            <p className="mt-2 text-sm leading-6 text-white/45 relative z-10">Use este padrão de cor e gradiente para blocos de informações gerais e de navegação da aplicação.</p>
+                        </div>
+
+                        {/* Card Purple/IA */}
+                        <div className="rounded-[1.6rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl transition-all hover:-translate-y-1 hover:border-fuchsia-400/25 hover:bg-white/[0.06] group cursor-pointer relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 via-fuchsia-500/10 to-blue-500/5 text-fuchsia-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                            </div>
+                            <h3 className="text-base font-black text-white relative z-10">Módulo de Automação</h3>
+                            <p className="mt-2 text-sm leading-6 text-white/45 relative z-10">Use o espectro Fuchsia/Purple para destacar blocos onde o sistema age por conta própria ou processa dados em background sem o usuário.</p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('identity');
+
+            const navItems = [
+                { id: 'identity', label: '1. Padrões' },
+                { id: 'colors', label: '2. Espectro & Uso' },
+                { id: 'gradients', label: '3. Gradientes & Neon' },
+                { id: 'typography', label: '4. Tipografia' },
+                { id: 'components', label: '5. Blocos' },
+            ];
+
+            return (
+                <div className="flex min-h-screen relative z-10">
+                    <aside className="w-72 border-r border-white/10 bg-[#030712]/80 backdrop-blur-xl p-8 flex flex-col fixed h-screen">
+                        <div className="mb-12 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-cyan-400 shadow-glow-primary border border-cyan-400/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 18.74c-3.14 2.82-7.85 2.82-10.98 0"/><path d="M22 14.38c-4.73 4.23-11.83 4.23-16.56 0"/><path d="M2.5 10c6.04 5.37 15.13 5.37 21.16 0"/><path d="M12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+                            </div>
+                            <div>
+                                <p className="text-sm font-black uppercase tracking-[0.18em] text-white">Nexus DS</p>
+                                <p className="text-[10px] uppercase tracking-[0.14em] text-white/35">Global Ecosystem</p>
+                            </div>
+                        </div>
+                        
+                        <nav className="flex flex-col gap-2">
+                            {navItems.map(item => (
+                                <button 
+                                    key={item.id}
+                                    className={`text-left px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-[0.1em] transition-all ${
+                                        activeTab === item.id 
+                                        ? 'bg-white/10 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' 
+                                        : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+                                    }`}
+                                    onClick={() => setActiveTab(item.id)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </nav>
+                    </aside>
+
+                    <main className="flex-1 ml-72 p-12 lg:p-24 max-w-5xl">
+                        {activeTab === 'identity' && <SectionIdentity />}
+                        {activeTab === 'colors' && <SectionColors />}
+                        {activeTab === 'gradients' && <SectionGradients />}
+                        {activeTab === 'typography' && <SectionTypography />}
+                        {activeTab === 'components' && <SectionComponents />}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

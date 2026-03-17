@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,7 +48,10 @@ fun AppTopBar(
         Column {
             TopAppBar(
                 title = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Column(
+                        modifier = Modifier.padding(start = if (onNavigationClick != null) 12.dp else 0.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
                         if (!eyebrow.isNullOrBlank()) {
                             Text(
                                 text = eyebrow.uppercase(),

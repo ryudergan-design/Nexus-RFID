@@ -88,7 +88,7 @@ object MockDataSource {
             label = "Reduzido",
             dialogTitle = "Codigo reduzido",
             inputPlaceholder = "Digite o codigo reduzido",
-            numericInput = true
+            numericInput = false
         ),
         SearchTypeOption(
             key = "ean13",

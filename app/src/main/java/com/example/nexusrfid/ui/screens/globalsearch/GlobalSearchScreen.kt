@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BluetoothConnected
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Stop
@@ -32,14 +33,20 @@ import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -82,6 +89,7 @@ import com.example.nexusrfid.ui.components.SearchTypeSheet
 import com.example.nexusrfid.ui.components.SimpleListRow
 import com.example.nexusrfid.ui.components.TagTargetItemUi
 import com.example.nexusrfid.ui.components.TagTargetList
+import com.example.nexusrfid.ui.components.TagTargetKind
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
@@ -92,10 +100,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 private const val ProductSearchTypeKey = "product"
 private const val TagSearchTypeKey = "tag"
 private const val TagExpectedLength = 20
+private const val ReducedExpectedLength = 10
+private const val EanExpectedLength = 13
 private const val TagSuffixPadding = "0000"
 
 @Composable
@@ -131,7 +142,12 @@ fun GlobalSearchScreen(
     }
     var dialogValue by remember(initialSearchValue) { mutableStateOf(initialSearchValue) }
     var dialogErrorMessage by remember { mutableStateOf<String?>(null) }
+    var showProductDialog by remember { mutableStateOf(false) }
+    var productReference by remember { mutableStateOf("") }
+    var productColor by remember { mutableStateOf("") }
+    var productSize by remember { mutableStateOf("") }
     var rfidSearching by remember { mutableStateOf(false) }
+    var rfidPaused by remember { mutableStateOf(false) }
     var readCount by remember { mutableIntStateOf(0) }
     var foundCount by remember { mutableIntStateOf(0) }
     var searchJob by remember { mutableStateOf<Job?>(null) }
@@ -154,6 +170,7 @@ fun GlobalSearchScreen(
         }
 
     val matchedProducts = tagTargets
+        .filter { it.kind != TagTargetKind.Product }
         .mapNotNull { target ->
             products.firstOrNull { tagsMatch(it.tagCode, target.epc) }
         }
@@ -177,6 +194,7 @@ fun GlobalSearchScreen(
             appState?.stopInventory()
         }
         rfidSearching = false
+        rfidPaused = false
 
         if (resetFeedback) {
             tagTargets = tagTargets.map {
@@ -192,16 +210,50 @@ fun GlobalSearchScreen(
         }
     }
 
+    fun pauseRfidSearch() {
+        searchJob?.cancel()
+        searchJob = null
+        if (rfidSearching) {
+            appState?.stopInventory()
+        }
+        rfidSearching = false
+        rfidPaused = true
+    }
+
     fun openDialogFor(option: SearchTypeOption) {
         dialogOption = option
         dialogErrorMessage = null
         dialogValue = if (selectedType.key == option.key) searchValue else ""
     }
 
+    fun openTargetDialog(option: SearchTypeOption) {
+        dialogOption = option
+        dialogErrorMessage = null
+        dialogValue = ""
+    }
+
+    fun openProductDialog() {
+        productReference = ""
+        productColor = ""
+        productSize = ""
+        dialogErrorMessage = null
+        showProductDialog = true
+    }
+
+    fun updateDialogValue(raw: String) {
+        val optionKey = dialogOption?.key
+        val sanitized = when (optionKey) {
+            TagSearchTypeKey -> raw.normalizedTag().take(TagExpectedLength)
+            "reduced" -> raw.normalizedTag().take(ReducedExpectedLength)
+            "ean13" -> raw.normalizedEan().take(EanExpectedLength)
+            else -> raw
+        }
+        dialogValue = sanitized
+    }
+
     fun selectSearchType(option: SearchTypeOption) {
         stopRfidSearch(resetFeedback = false)
         selectedType = option
-        showTypeSheet = false
         if (option.key == TagSearchTypeKey) {
             productInput = ""
             searchValue = ""
@@ -216,6 +268,19 @@ fun GlobalSearchScreen(
         }
     }
 
+    fun handleTypeSelection(option: SearchTypeOption) {
+        showTypeSheet = false
+        if (isTagMode) {
+            if (option.key == ProductSearchTypeKey) {
+                openProductDialog()
+            } else {
+                openTargetDialog(option)
+            }
+            return
+        }
+        selectSearchType(option)
+    }
+
     fun clearAll() {
         stopRfidSearch(resetFeedback = true)
         productInput = ""
@@ -228,16 +293,39 @@ fun GlobalSearchScreen(
         appState?.clearErrorMessage()
     }
 
-    fun addTagTarget(rawValue: String) {
-        val normalizedTag = rawValue.normalizedTag()
+    fun addTarget(rawValue: String, kind: TagTargetKind) {
+        val normalizedValue = when (kind) {
+            TagTargetKind.Tag,
+            TagTargetKind.Reduced -> rawValue.normalizedTag()
+            TagTargetKind.Ean13 -> rawValue.normalizedEan()
+            TagTargetKind.Product -> rawValue
+        }
+        val duplicate = tagTargets.any { target ->
+            if (target.kind != kind) return@any false
+            when (kind) {
+                TagTargetKind.Tag -> tagsMatch(target.epc, normalizedValue)
+                TagTargetKind.Reduced -> target.epc.normalizedTag() == normalizedValue
+                TagTargetKind.Ean13 -> target.epc.normalizedEan() == normalizedValue
+                TagTargetKind.Product -> target.epc == normalizedValue
+            }
+        }
+
+        val validationError = when (kind) {
+            TagTargetKind.Tag -> if (!isValidTagLength(normalizedValue)) "A tag precisa ter 20 caracteres." else null
+            TagTargetKind.Reduced -> if (!isValidReducedLength(normalizedValue)) "O reduzido precisa ter 10 caracteres." else null
+            TagTargetKind.Ean13 -> if (!isValidEanLength(normalizedValue)) "O EAN-13 precisa ter 13 numeros." else null
+            TagTargetKind.Product -> if (normalizedValue.isBlank()) "Preencha referencia, cor e tamanho." else null
+        }
+
         when {
-            !isValidTagLength(normalizedTag) -> dialogErrorMessage = "A tag precisa ter 20 caracteres."
-            tagTargets.any { tagsMatch(it.epc, normalizedTag) } -> dialogErrorMessage = "Essa tag ja foi adicionada."
+            validationError != null -> dialogErrorMessage = validationError
+            duplicate -> dialogErrorMessage = "Esse alvo ja foi adicionado."
             else -> {
                 tagTargets = tagTargets + TagTargetItemUi(
-                    epc = normalizedTag,
+                    epc = normalizedValue,
                     proximityPercent = 0,
-                    proximityLabel = "Aguardando"
+                    proximityLabel = "Aguardando",
+                    kind = kind
                 )
                 dialogValue = ""
                 dialogErrorMessage = null
@@ -273,7 +361,9 @@ fun GlobalSearchScreen(
                             lastSeenAtMillis = now,
                             rssiPercent = percent
                         )
-                        val matchedIndex = updatedTargets.indexOfFirst { tagsMatch(it.epc, normalizedEpc) }
+                        val matchedIndex = updatedTargets.indexOfFirst { target ->
+                            target.kind != TagTargetKind.Product && tagsMatch(target.epc, normalizedEpc)
+                        }
                         if (matchedIndex >= 0) {
                             matchFoundInCycle = matchFoundInCycle || percent > 0
                             val current = targetSignals[matchedIndex]
@@ -332,11 +422,14 @@ fun GlobalSearchScreen(
             dialogErrorMessage = "Adicione pelo menos uma tag para iniciar."
             return
         }
+        val wasPaused = rfidPaused
+        stopRfidSearch(resetFeedback = !wasPaused)
         if (appState != null && !appState.startInventory()) {
+            rfidPaused = wasPaused
             return
         }
-        stopRfidSearch(resetFeedback = true)
         rfidSearching = true
+        rfidPaused = false
         updateTargetsFromReads()
     }
 
@@ -358,6 +451,7 @@ fun GlobalSearchScreen(
         onMenuClick = onMenuClick,
         onOpenType = { showTypeSheet = true },
         onStartSearch = ::startSearch,
+        onPauseSearch = ::pauseRfidSearch,
         onStopSearch = { stopRfidSearch(resetFeedback = false) },
         onClear = ::clearAll,
         onAddTag = { showTypeSheet = true },
@@ -371,20 +465,15 @@ fun GlobalSearchScreen(
         },
         soundEnabled = soundEnabled,
         readerReady = readerReady,
+        paused = rfidPaused,
         onToggleSound = {
             appState?.let { state -> state.updateSoundEnabled(!state.soundEnabled) }
         },
-        onDecreasePower = {
-            appState?.let { state ->
-                state.updateReaderPower((state.readerPower - 1).coerceAtLeast(1))
-            }
-        },
-        onIncreasePower = {
-            appState?.let { state ->
-                state.updateReaderPower((state.readerPower + 1).coerceAtMost(30))
-            }
+        onPowerChange = { newPower ->
+            appState?.updateReaderPower(newPower)
         },
         collectorLabel = appState?.selectedCollectorModel?.label ?: "R6",
+        collectorModel = appState?.selectedCollectorModel ?: CollectorModel.R6,
         collectorStatus = appState?.statusMessage.orEmpty(),
         connectedDeviceName = appState?.connectedDevice?.displayName,
         readingActive = rfidSearching,
@@ -411,7 +500,7 @@ fun GlobalSearchScreen(
     if (showTypeSheet) {
         SearchTypeSheet(
             options = searchTypes,
-            onSelect = ::selectSearchType,
+            onSelect = ::handleTypeSelection,
             onDismiss = { showTypeSheet = false }
         )
     }
@@ -420,7 +509,7 @@ fun GlobalSearchScreen(
         AppDialog(
             title = if (option.key == TagSearchTypeKey) "Adicionar tag" else option.dialogTitle ?: option.label,
             value = dialogValue,
-            onValueChange = { dialogValue = it.uppercase() },
+            onValueChange = ::updateDialogValue,
             placeholder = option.inputPlaceholder ?: "Informe o valor",
             numericInput = option.numericInput,
             onDismiss = {
@@ -428,8 +517,14 @@ fun GlobalSearchScreen(
                 dialogErrorMessage = null
             },
             onConfirm = {
-                if (option.key == TagSearchTypeKey) {
-                    addTagTarget(dialogValue)
+                val kind = when (option.key) {
+                    TagSearchTypeKey -> TagTargetKind.Tag
+                    "reduced" -> TagTargetKind.Reduced
+                    "ean13" -> TagTargetKind.Ean13
+                    else -> null
+                }
+                if (isTagMode && kind != null) {
+                    addTarget(dialogValue, kind)
                 } else {
                     selectedType = option
                     searchValue = dialogValue.trim()
@@ -438,7 +533,39 @@ fun GlobalSearchScreen(
             },
             confirmEnabled = when (option.key) {
                 TagSearchTypeKey -> isValidTagLength(dialogValue.normalizedTag())
+                "reduced" -> isValidReducedLength(dialogValue.normalizedTag())
+                "ean13" -> isValidEanLength(dialogValue.normalizedEan())
                 else -> dialogValue.isNotBlank()
+            }
+        )
+    }
+
+    if (showProductDialog) {
+        ProductTargetDialog(
+            reference = productReference,
+            color = productColor,
+            size = productSize,
+            onReferenceChange = { productReference = it.uppercase() },
+            onColorChange = { productColor = it.uppercase() },
+            onSizeChange = { productSize = it.uppercase() },
+            onConfirm = {
+                val trimmedReference = productReference.trim()
+                val trimmedColor = productColor.trim()
+                val trimmedSize = productSize.trim()
+                val displayValue = listOf(trimmedReference, trimmedColor, trimmedSize).joinToString(" | ")
+                val duplicate = tagTargets.any { target ->
+                    target.kind == TagTargetKind.Product && target.epc == displayValue
+                }
+                if (duplicate) {
+                    dialogErrorMessage = "Esse alvo ja foi adicionado."
+                } else {
+                    addTarget(displayValue, TagTargetKind.Product)
+                    showProductDialog = false
+                }
+            },
+            onDismiss = {
+                showProductDialog = false
+                dialogErrorMessage = null
             }
         )
     }
@@ -466,8 +593,8 @@ private fun SearchOverviewCard(
     onStopSearch: () -> Unit,
     onOpenType: () -> Unit,
     onClear: () -> Unit,
-    onDecreasePower: () -> Unit,
-    onIncreasePower: () -> Unit
+    onPowerChange: (Int) -> Unit,
+    collectorModel: CollectorModel
 ) {
     val headline = if (isTagMode) "Busca RFID operacional" else "Consulta de produtos"
     val statusLine = when {
@@ -573,8 +700,8 @@ private fun SearchOverviewCard(
             if (isTagMode) {
                 PowerControlStrip(
                     powerLevel = powerLevel,
-                    onDecreasePower = onDecreasePower,
-                    onIncreasePower = onIncreasePower
+                    collectorModel = collectorModel,
+                    onPowerChange = onPowerChange
                 )
             }
         }
@@ -718,9 +845,11 @@ private fun ActionTile(
 @Composable
 private fun PowerControlStrip(
     powerLevel: Int,
-    onDecreasePower: () -> Unit,
-    onIncreasePower: () -> Unit
+    collectorModel: CollectorModel,
+    onPowerChange: (Int) -> Unit
 ) {
+    val percent = powerToPercent(powerLevel)
+    val rangeMeters = rangeMetersForPercent(percent, collectorModel)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -741,22 +870,50 @@ private fun PowerControlStrip(
                 style = MaterialTheme.typography.bodySmall,
                 color = AppColors.TextSecondary
             )
+            Text(
+                text = "Potencia: ${percent}%",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary
+            )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
         ) {
-            PowerStepButton(label = "-", onClick = onDecreasePower)
             Text(
-                text = powerLevel.toString(),
-                modifier = Modifier
-                    .border(1.dp, AppColors.Divider, AppShapes.input)
-                    .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm),
-                style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace),
-                color = AppColors.TextPrimary
+                text = "Raio de Alcance: ${rangeMeters} metros",
+                style = MaterialTheme.typography.bodySmall,
+                color = AppColors.TextSecondary
             )
-            PowerStepButton(label = "+", onClick = onIncreasePower, filled = true)
+            Slider(
+                value = percent.toFloat(),
+                onValueChange = { value ->
+                    val newPercent = value.roundToInt().coerceIn(0, 100)
+                    onPowerChange(percentToPower(newPercent))
+                },
+                valueRange = 0f..100f,
+                colors = SliderDefaults.colors(
+                    thumbColor = AppColors.BrandSignalBlue,
+                    activeTrackColor = AppColors.PrimaryActionBlue,
+                    inactiveTrackColor = AppColors.Divider
+                )
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "0%",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = "100%",
+                    style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                    color = AppColors.TextSecondary
+                )
+            }
         }
     }
 }
@@ -968,9 +1125,11 @@ private fun SearchResultsCard(
 @Composable
 private fun LegacyActionRow(
     readingActive: Boolean,
+    paused: Boolean,
     soundEnabled: Boolean,
     readerEnabled: Boolean,
     onStart: () -> Unit,
+    onPause: () -> Unit,
     onStop: () -> Unit,
     onPowerClick: () -> Unit,
     onSoundClick: () -> Unit,
@@ -985,14 +1144,22 @@ private fun LegacyActionRow(
             icon = Icons.Outlined.PlayArrow,
             onClick = onStart,
             active = readingActive,
+            activeColor = AppColors.PositiveGreen,
             enabled = readerEnabled,
             modifier = Modifier.weight(1f)
         )
+        val showStop = paused || !readingActive
         LegacyActionButton(
-            label = "Parar",
-            icon = Icons.Outlined.Stop,
-            onClick = onStop,
-            enabled = readerEnabled,
+            label = if (showStop) "Parar" else "Pausar",
+            icon = if (showStop) Icons.Outlined.Stop else Icons.Outlined.Pause,
+            onClick = when {
+                paused -> onStop
+                readingActive -> onPause
+                else -> onStop
+            },
+            active = readingActive || paused,
+            activeColor = if (paused) AppColors.DangerRed else AppColors.WarningAmber,
+            enabled = readerEnabled && (readingActive || paused),
             modifier = Modifier.weight(1f)
         )
         LegacyActionButton(
@@ -1019,16 +1186,21 @@ private fun LegacyActionButton(
     icon: ImageVector,
     onClick: () -> Unit,
     active: Boolean = false,
+    activeColor: androidx.compose.ui.graphics.Color = AppColors.BrandSignalBlue,
     enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val disabledColor = AppColors.TextSecondary.copy(alpha = 0.4f)
     val tint = when {
         !enabled -> disabledColor
-        active -> AppColors.BrandSignalBlue
+        active -> activeColor
         else -> AppColors.TextSecondary
     }
-    val textColor = if (enabled) AppColors.TextSecondary else disabledColor
+    val textColor = when {
+        !enabled -> disabledColor
+        active -> activeColor
+        else -> AppColors.TextSecondary
+    }
     Column(
         modifier = modifier
             .clickable(enabled = enabled, onClick = onClick)
@@ -1253,10 +1425,12 @@ private fun ReadTagRow(
 @Composable
 private fun PowerDialog(
     powerLevel: Int,
-    onDecrease: () -> Unit,
-    onIncrease: () -> Unit,
+    collectorModel: CollectorModel,
+    onPowerChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val percent = powerToPercent(powerLevel)
+    val rangeMeters = rangeMetersForPercent(percent, collectorModel)
     Dialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -1276,23 +1450,43 @@ private fun PowerDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     color = AppColors.TextPrimary
                 )
+                Text(
+                    text = "Raio de Alcance: ${rangeMeters} metros",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+                Text(
+                    text = "Potencia: ${percent}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+                Slider(
+                    value = percent.toFloat(),
+                    onValueChange = { value ->
+                        val newPercent = value.roundToInt().coerceIn(0, 100)
+                        onPowerChange(percentToPower(newPercent))
+                    },
+                    valueRange = 0f..100f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = AppColors.BrandSignalBlue,
+                        activeTrackColor = AppColors.PrimaryActionBlue,
+                        inactiveTrackColor = AppColors.Divider
+                    )
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    PowerStepButton(label = "-", onClick = onDecrease)
                     Text(
-                        text = powerLevel.toString(),
-                        modifier = Modifier
-                            .weight(1f)
-                            .border(1.dp, AppColors.Divider, AppShapes.input)
-                            .padding(vertical = AppSpacing.sm),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = AppColors.TextPrimary
+                        text = "0%",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                        color = AppColors.TextSecondary
                     )
-                    PowerStepButton(label = "+", onClick = onIncrease, filled = true)
+                    Text(
+                        text = "100%",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 10.sp),
+                        color = AppColors.TextSecondary
+                    )
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1303,6 +1497,153 @@ private fun PowerDialog(
                             text = "Fechar",
                             color = AppColors.TextSecondary
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProductTargetDialog(
+    reference: String,
+    color: String,
+    size: String,
+    onReferenceChange: (String) -> Unit,
+    onColorChange: (String) -> Unit,
+    onSizeChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val canConfirm = reference.isNotBlank() && color.isNotBlank() && size.isNotBlank()
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = AppShapes.modal,
+            colors = CardDefaults.cardColors(containerColor = AppColors.DarkModal),
+            border = BorderStroke(1.dp, AppColors.Divider),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            ) {
+                Text(
+                    text = "Adicionar produto",
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AppColors.TextPrimary,
+                    textAlign = TextAlign.Center
+                )
+
+                OutlinedTextField(
+                    value = reference,
+                    onValueChange = onReferenceChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    singleLine = true,
+                    shape = AppShapes.input,
+                    placeholder = {
+                        Text(
+                            text = "Referencia",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppColors.TextSecondary
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = AppColors.CardSurfaceHighlight,
+                        unfocusedContainerColor = AppColors.CardSurfaceHighlight,
+                        disabledContainerColor = AppColors.CardSurfaceHighlight,
+                        errorContainerColor = AppColors.CardSurfaceHighlight,
+                        focusedBorderColor = AppColors.Divider,
+                        unfocusedBorderColor = AppColors.Divider,
+                        cursorColor = AppColors.PrimaryActionBlue,
+                        focusedTextColor = AppColors.TextPrimary,
+                        unfocusedTextColor = AppColors.TextPrimary
+                    )
+                )
+
+                OutlinedTextField(
+                    value = color,
+                    onValueChange = onColorChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    singleLine = true,
+                    shape = AppShapes.input,
+                    placeholder = {
+                        Text(
+                            text = "Cor",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppColors.TextSecondary
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = AppColors.CardSurfaceHighlight,
+                        unfocusedContainerColor = AppColors.CardSurfaceHighlight,
+                        disabledContainerColor = AppColors.CardSurfaceHighlight,
+                        errorContainerColor = AppColors.CardSurfaceHighlight,
+                        focusedBorderColor = AppColors.Divider,
+                        unfocusedBorderColor = AppColors.Divider,
+                        cursorColor = AppColors.PrimaryActionBlue,
+                        focusedTextColor = AppColors.TextPrimary,
+                        unfocusedTextColor = AppColors.TextPrimary
+                    )
+                )
+
+                OutlinedTextField(
+                    value = size,
+                    onValueChange = onSizeChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium,
+                    singleLine = true,
+                    shape = AppShapes.input,
+                    placeholder = {
+                        Text(
+                            text = "Tamanho",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppColors.TextSecondary
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = AppColors.CardSurfaceHighlight,
+                        unfocusedContainerColor = AppColors.CardSurfaceHighlight,
+                        disabledContainerColor = AppColors.CardSurfaceHighlight,
+                        errorContainerColor = AppColors.CardSurfaceHighlight,
+                        focusedBorderColor = AppColors.Divider,
+                        unfocusedBorderColor = AppColors.Divider,
+                        cursorColor = AppColors.PrimaryActionBlue,
+                        focusedTextColor = AppColors.TextPrimary,
+                        unfocusedTextColor = AppColors.TextPrimary
+                    )
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text = "Cancelar",
+                            color = AppColors.TextSecondary
+                        )
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        enabled = canConfirm,
+                        shape = AppShapes.button,
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp
+                        ),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = AppColors.TopBarBlue,
+                            contentColor = AppColors.TopBarOnBlue
+                        )
+                    ) {
+                        Text("Salvar")
                     }
                 }
             }
@@ -1352,8 +1693,29 @@ private fun String.normalizedTag(): String {
     return uppercase().replace(" ", "").replace("-", "").replace(".", "")
 }
 
+private fun String.normalizedEan(): String {
+    return filter { it.isDigit() }
+}
+
 private fun isValidTagLength(value: String): Boolean {
     return value.length == TagExpectedLength
+}
+
+private fun isValidReducedLength(value: String): Boolean {
+    return value.length == ReducedExpectedLength
+}
+
+private fun isValidEanLength(value: String): Boolean {
+    return value.length == EanExpectedLength && value.all { it.isDigit() }
+}
+
+private fun normalizedCoreTag(value: String): String {
+    val normalized = value.normalizedTag()
+    return if (normalized.length > TagExpectedLength) {
+        normalized.takeLast(TagExpectedLength)
+    } else {
+        normalized
+    }
 }
 
 private fun canonicalTag(value: String): String {
@@ -1371,6 +1733,9 @@ private fun tagVariants(value: String): Set<String> {
     val normalized = value.normalizedTag()
     if (normalized.isBlank()) return emptySet()
     val variants = mutableSetOf(normalized)
+    if (normalized.length > TagExpectedLength) {
+        variants.add(normalized.takeLast(TagExpectedLength))
+    }
     if (normalized.length == TagExpectedLength) {
         variants.add(normalized.padStart(TagExpectedLength + TagSuffixPadding.length, '0'))
         variants.add(normalized + TagSuffixPadding)
@@ -1391,9 +1756,69 @@ private fun tagVariants(value: String): Set<String> {
 
 private fun tagsMatch(left: String, right: String): Boolean {
     if (left.isBlank() || right.isBlank()) return false
-    val leftVariants = tagVariants(left)
-    val rightVariants = tagVariants(right)
+    val leftNormalized = left.normalizedTag()
+    val rightNormalized = right.normalizedTag()
+
+    if (isValidReducedLength(leftNormalized)) {
+        return reducedMatchesTag(leftNormalized, rightNormalized)
+    }
+    if (isValidReducedLength(rightNormalized)) {
+        return reducedMatchesTag(rightNormalized, leftNormalized)
+    }
+    if (isValidEanLength(leftNormalized)) {
+        return eanMatchesTag(leftNormalized, rightNormalized)
+    }
+    if (isValidEanLength(rightNormalized)) {
+        return eanMatchesTag(rightNormalized, leftNormalized)
+    }
+
+    val leftVariants = tagVariants(leftNormalized)
+    val rightVariants = tagVariants(rightNormalized)
     return leftVariants.any { it in rightVariants }
+}
+
+private fun reducedMatchesTag(reducedValue: String, tagValue: String): Boolean {
+    val reduced = reducedValue.normalizedTag()
+    if (!isValidReducedLength(reduced)) return false
+    val coreTag = normalizedCoreTag(tagValue)
+    if (coreTag.length >= 12 && coreTag.substring(2, 12) == reduced) return true
+    return coreTag.contains(reduced)
+}
+
+private fun eanMatchesTag(eanValue: String, tagValue: String): Boolean {
+    val ean = eanValue.normalizedEan()
+    if (!isValidEanLength(ean)) return false
+    val coreTag = normalizedCoreTag(tagValue)
+    return coreTag.contains(ean)
+}
+
+private fun powerToPercent(power: Int): Int {
+    val min = 1
+    val max = 30
+    val clamped = power.coerceIn(min, max)
+    return (((clamped - min).toFloat() / (max - min)) * 100f).roundToInt().coerceIn(0, 100)
+}
+
+private fun percentToPower(percent: Int): Int {
+    val min = 1
+    val max = 30
+    val clamped = percent.coerceIn(0, 100)
+    return (min + ((max - min) * (clamped / 100f))).roundToInt().coerceIn(min, max)
+}
+
+private fun modelRangeMeters(model: CollectorModel): IntRange {
+    return when (model) {
+        CollectorModel.R6 -> 5..10
+        CollectorModel.C72 -> 3..6
+        CollectorModel.MC339U -> 4..12
+    }
+}
+
+private fun rangeMetersForPercent(percent: Int, model: CollectorModel): Int {
+    val range = modelRangeMeters(model)
+    val clampedPercent = percent.coerceIn(0, 100)
+    val meters = range.first + ((range.last - range.first) * (clampedPercent / 100f))
+    return meters.roundToInt().coerceIn(range.first, range.last)
 }
 
 private fun rssiToPercent(rssi: Int?): Int {
@@ -1483,6 +1908,7 @@ private fun GlobalSearchContent(
     onMenuClick: () -> Unit,
     onOpenType: () -> Unit,
     onStartSearch: () -> Unit,
+    onPauseSearch: () -> Unit,
     onStopSearch: () -> Unit,
     onClear: () -> Unit,
     onAddTag: () -> Unit,
@@ -1490,10 +1916,11 @@ private fun GlobalSearchContent(
     onRemoveTag: (String) -> Unit,
     soundEnabled: Boolean,
     readerReady: Boolean,
+    paused: Boolean,
     onToggleSound: () -> Unit,
-    onDecreasePower: () -> Unit,
-    onIncreasePower: () -> Unit,
+    onPowerChange: (Int) -> Unit,
     collectorLabel: String,
+    collectorModel: CollectorModel,
     collectorStatus: String,
     connectedDeviceName: String?,
     readingActive: Boolean,
@@ -1545,9 +1972,11 @@ private fun GlobalSearchContent(
                     item {
                         LegacyActionRow(
                             readingActive = readingActive,
+                            paused = paused,
                             soundEnabled = soundEnabled,
                             readerEnabled = readerReady,
                             onStart = onStartSearch,
+                            onPause = onPauseSearch,
                             onStop = onStopSearch,
                             onPowerClick = {
                                 if (readerReady) {
@@ -1608,8 +2037,8 @@ private fun GlobalSearchContent(
                             onStopSearch = onStopSearch,
                             onOpenType = onOpenType,
                             onClear = onClear,
-                            onDecreasePower = onDecreasePower,
-                            onIncreasePower = onIncreasePower
+                            onPowerChange = onPowerChange,
+                            collectorModel = collectorModel
                         )
                     }
 
@@ -1689,8 +2118,8 @@ private fun GlobalSearchContent(
     if (showPowerDialog) {
         PowerDialog(
             powerLevel = powerLevel,
-            onDecrease = onDecreasePower,
-            onIncrease = onIncreasePower,
+            collectorModel = collectorModel,
+            onPowerChange = onPowerChange,
             onDismiss = { showPowerDialog = false }
         )
     }

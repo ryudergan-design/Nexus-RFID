@@ -27,12 +27,20 @@ import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
 
+enum class TagTargetKind {
+    Tag,
+    Reduced,
+    Ean13,
+    Product
+}
+
 data class TagTargetItemUi(
     val epc: String,
     val proximityPercent: Int,
     val proximityLabel: String,
     val matchedProductName: String? = null,
-    val lastSeenAtMillis: Long? = null
+    val lastSeenAtMillis: Long? = null,
+    val kind: TagTargetKind = TagTargetKind.Tag
 )
 
 @Composable
@@ -125,7 +133,12 @@ private fun TagTargetRow(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
             ) {
                 Text(
-                    text = "EPC",
+                    text = when (item.kind) {
+                        TagTargetKind.Tag -> "EPC"
+                        TagTargetKind.Reduced -> "REDUZIDO"
+                        TagTargetKind.Ean13 -> "EAN-13"
+                        TagTargetKind.Product -> "PRODUTO"
+                    },
                     style = MaterialTheme.typography.labelLarge,
                     color = AppColors.TextSecondary
                 )

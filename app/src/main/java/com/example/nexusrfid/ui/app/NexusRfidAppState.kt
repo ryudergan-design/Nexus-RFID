@@ -20,6 +20,7 @@ import com.example.nexusrfid.rfid.ReaderRecognitionFeedback
 import com.example.nexusrfid.rfid.ReaderRecognitionState
 import com.example.nexusrfid.rfid.RfidConnectionState
 import com.example.nexusrfid.rfid.RfidDevice
+import com.example.nexusrfid.rfid.RfidPermissionGateway
 import com.example.nexusrfid.rfid.RfidReader
 import com.example.nexusrfid.rfid.RfidTagRead
 import com.example.nexusrfid.rfid.c72.C72InternalReader
@@ -154,7 +155,7 @@ class NexusRfidAppState internal constructor(
         
         statusMessage = when (model) {
             CollectorModel.C72 -> "C72 selecionado. Toque em Conectar para abrir o barramento interno."
-            CollectorModel.R6 -> "R6 selecionado. Busque o leitor ativo para conectar."
+            CollectorModel.R6 -> "R6 selecionado. Selecione um leitor pareado para conectar."
             CollectorModel.MC339U -> "MC339U selecionado. Toque em Conectar para abrir o servico Zebra."
         }
     }
@@ -202,21 +203,16 @@ class NexusRfidAppState internal constructor(
                 return
             }
             else -> {
-                isDeviceScanRunning = true
+                val bondedDevices = RfidPermissionGateway.bondedDevices(appContext)
                 if (connectionState != RfidConnectionState.Connected) {
-                    connectionState = RfidConnectionState.Scanning
-                    statusMessage = "Buscando leitores Bluetooth ativos..."
+                    connectionState = RfidConnectionState.Idle
                 }
-
-                r6Reader.startScan { device ->
-                    mainHandler.post {
-                        val index = availableDevices.indexOfFirst { it.address == device.address }
-                        if (index >= 0) {
-                            availableDevices[index] = device
-                        } else {
-                            availableDevices.add(device)
-                        }
-                    }
+                availableDevices.addAll(bondedDevices)
+                isDeviceScanRunning = false
+                statusMessage = when {
+                    bondedDevices.isEmpty() -> "Nenhum leitor pareado encontrado. Verifique o Bluetooth."
+                    bondedDevices.size == 1 -> "1 leitor pareado pronto para conectar."
+                    else -> "${bondedDevices.size} leitores pareados prontos para conectar."
                 }
             }
         }
