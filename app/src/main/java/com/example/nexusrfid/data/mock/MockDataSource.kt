@@ -77,12 +77,123 @@ object MockDataSource {
         DrawerMenuItem("Sair", "login")
     )
 
+    val searchSummary = SearchCounterSummary(
+        readCount = 128,
+        foundCount = 46
+    )
+
+    val searchTargets = listOf(
+        SearchTargetItem(key = "all", label = "Todos"),
+        SearchTargetItem(key = "pending", label = "Pendentes", targetState = ProductTargetState.Pending),
+        SearchTargetItem(key = "found", label = "Encontrados", targetState = ProductTargetState.Found),
+        SearchTargetItem(key = "divergent", label = "Divergentes", targetState = ProductTargetState.Divergent)
+    )
+
+    val searchTypes = listOf(
+        SearchTypeOption(key = "product", label = "Produto"),
+        SearchTypeOption(
+            key = "reduced",
+            label = "Reduzido",
+            dialogTitle = "Codigo reduzido",
+            inputPlaceholder = "Digite o codigo reduzido",
+            numericInput = true
+        ),
+        SearchTypeOption(
+            key = "ean13",
+            label = "EAN-13",
+            dialogTitle = "EAN-13",
+            inputPlaceholder = "Digite o codigo EAN-13",
+            numericInput = true
+        ),
+        SearchTypeOption(
+            key = "tag",
+            label = "Tag",
+            dialogTitle = "Tag",
+            inputPlaceholder = "Digite a tag",
+            numericInput = false
+        )
+    )
+
     val products = listOf(
-        ProductListItem("ACESSORIO EM MACRAME", "064.22.00238"),
-        ProductListItem("ACESSORIOS GEOMETRICO 3D", "064.22.00037"),
-        ProductListItem("ACRILICO TRIANGULAR CLC", "067.53.00113"),
-        ProductListItem("ADESIVO COLCCI DIA DOS PAIS PAC 25 ADES", "067.01.01886"),
-        ProductListItem("ADESIVO COLCCI REVENDEDOR", "067.01.02193"),
-        ProductListItem("ADESIVO COLCCI SPORT MM", "067.57.00074")
+        ProductListItem(
+            name = "ACESSORIO EM MACRAME",
+            code = "064.22.00238",
+            reducedCode = "2238",
+            ean13 = "7898900022386",
+            tagCode = "E28069950000502122380001",
+            targetState = ProductTargetState.Pending
+        ),
+        ProductListItem(
+            name = "ACESSORIOS GEOMETRICO 3D",
+            code = "064.22.00037",
+            reducedCode = "2037",
+            ean13 = "7898900020375",
+            tagCode = "E28069950000502120370002",
+            targetState = ProductTargetState.Found
+        ),
+        ProductListItem(
+            name = "ACRILICO TRIANGULAR CLC",
+            code = "067.53.00113",
+            reducedCode = "5113",
+            ean13 = "7898900051131",
+            tagCode = "E28069950000502151130003",
+            targetState = ProductTargetState.Pending
+        ),
+        ProductListItem(
+            name = "ADESIVO COLCCI DIA DOS PAIS PAC 25 ADES",
+            code = "067.01.01886",
+            reducedCode = "1886",
+            ean13 = "7898900018865",
+            tagCode = "E28069950000502118860004",
+            targetState = ProductTargetState.Divergent
+        ),
+        ProductListItem(
+            name = "ADESIVO COLCCI REVENDEDOR",
+            code = "067.01.02193",
+            reducedCode = "2193",
+            ean13 = "7898900021934",
+            tagCode = "E28069950000502121930005",
+            targetState = ProductTargetState.Found
+        ),
+        ProductListItem(
+            name = "ADESIVO COLCCI SPORT MM",
+            code = "067.57.00074",
+            reducedCode = "7074",
+            ean13 = "7898900070743",
+            tagCode = "E28069950000502170740006",
+            targetState = ProductTargetState.Pending
+        ),
+        ProductListItem(
+            name = "BERMUDA SARJA FORUM",
+            code = "091.11.00421",
+            reducedCode = "1421",
+            ean13 = "7898901042107",
+            tagCode = "E28069950000502114210007",
+            targetState = ProductTargetState.Found
+        ),
+        ProductListItem(
+            name = "CALCA JEANS COLCCI SKINNY",
+            code = "103.84.01129",
+            reducedCode = "1129",
+            ean13 = "7898901112909",
+            tagCode = "E28069950000502111290008",
+            targetState = ProductTargetState.Pending
+        ),
+        ProductListItem(
+            name = "CAMISETA BASICA NEXUS",
+            code = "114.20.00088",
+            reducedCode = "3088",
+            ean13 = "7898901308807",
+            tagCode = "E28069950000502130880009",
+            targetState = ProductTargetState.Divergent
+        ),
+        ProductListItem(
+            name = "VESTIDO MIDI OPEN",
+            code = "154.67.00051",
+            reducedCode = "4051",
+            ean13 = "7898901405100",
+            tagCode = "E28069950000502140510010",
+            targetState = ProductTargetState.Found
+        )
     )
 }

@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Fundacao visual e contexto** - Consolidar referencias, estrutura do projeto, tokens e base de navegacao.
 - [x] **Phase 2: Fluxos iniciais** - Implementar Login, Departamentos, Inventario e drawer lateral.
-- [ ] **Phase 3: Catalogo e busca global** - Implementar Produtos, Busca Global e dialogos de entrada.
+- [x] **Phase 3: Catalogo e busca global** - Implementar Produtos, Busca Global e dialogos de entrada.
 - [ ] **Phase 4: Busca de produto e associacao** - Entregar Buscar Global Produto e Associar Tags.
 - [ ] **Phase 5: Fluxos fiscais e configuracoes** - Implementar Nota Fiscal, Movimentacao e Configuracoes com seus modais.
 - [ ] **Phase 6: Leitura Livre e acabamento visual** - Finalizar Leitura Livre, lista de dispositivos, previews e revisao de fidelidade.
@@ -63,9 +63,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Implementar tela de Produtos e seus componentes de busca.
-- [ ] 03-02: Implementar tela de Busca Global com contadores e acoes.
-- [ ] 03-03: Implementar dialogos de entrada para reduzido, EAN-13 e Tag.
+- [x] 03-01: Implementar tela de Produtos e seus componentes de busca.
+- [x] 03-02: Implementar tela de Busca Global com contadores e acoes.
+- [x] 03-03: Implementar dialogos de entrada para reduzido, EAN-13 e Tag.
 
 ### Phase 4: Busca de produto e associacao
 **Goal**: Finalizar os fluxos de busca detalhada e associacao de tags.
@@ -135,7 +135,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Fundacao visual e contexto | 3/3 | Complete | 2026-03-16 |
 | 2. Fluxos iniciais | 3/3 | Complete | 2026-03-16 |
-| 3. Catalogo e busca global | 0/3 | Not started | - |
+| 3. Catalogo e busca global | 3/3 | Complete | 2026-03-16 |
 | 4. Busca de produto e associacao | 0/2 | Not started | - |
 | 5. Fluxos fiscais e configuracoes | 0/3 | Not started | - |
 | 6. Leitura Livre e acabamento visual | 0/3 | Not started | - |

@@ -53,9 +53,6 @@ fun DrawerMenu(
     val primaryItems = items.filterNot { it.route == "login" }
     val logoutItem = items.firstOrNull { it.route == "login" }
     val expandedGroups = remember { mutableStateMapOf<String, Boolean>() }
-    val shortcutCount = primaryItems.sumOf { item ->
-        if (item.children.isEmpty()) 1 else item.children.size
-    }
 
     Column(
         modifier = modifier
@@ -104,7 +101,7 @@ fun DrawerMenu(
                                     color = AppColors.TopBarOnBlue
                                 )
                                 Text(
-                                    text = "Menu operacional da sessao",
+                                    text = "Acesso rapido do app",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = AppColors.TopBarOnBlue.copy(alpha = 0.72f)
                                 )
@@ -143,17 +140,17 @@ fun DrawerMenu(
                             verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
                         ) {
                             Text(
-                                text = "Fluxos disponiveis",
+                                text = "Menu principal",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppColors.TopBarOnBlue.copy(alpha = 0.70f)
                             )
                             Text(
-                                text = "$shortcutCount atalhos prontos para operacao",
+                                text = "Consulte produtos, inventarios e conferencias.",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = AppColors.TopBarOnBlue
                             )
                             Text(
-                                text = "Buscar produtos, consultar cadastros e abrir conferencias a partir do menu principal.",
+                                text = "Use o menu para navegar pelas principais areas da operacao.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = AppColors.TopBarOnBlue.copy(alpha = 0.72f)
                             )
@@ -164,7 +161,7 @@ fun DrawerMenu(
 
             item {
                 Text(
-                    text = "Fluxos da sessao",
+                    text = "Menu",
                     modifier = Modifier.padding(
                         start = AppSpacing.lg,
                         end = AppSpacing.lg,
@@ -414,12 +411,12 @@ private fun supportTextFor(route: String): String {
     return when (route) {
         "products" -> "Consulta individual de itens"
         "inventory" -> "Listas e contagens de inventario"
-        "global_search" -> "Busca operacional e rastreio"
+        "global_search" -> "Busca com contadores e filtros"
         "conferences" -> "Expandir nota fiscal e movimentacao"
         "invoice" -> "Conferencia fiscal do recebimento"
         "movement" -> "Conferencia de movimentacao do estoque"
         "settings" -> "Parametros e configuracoes"
         "login" -> "Encerrar sessao atual"
-        else -> "Fluxo disponivel nesta sessao"
+        else -> "Area disponivel neste app"
     }
 }

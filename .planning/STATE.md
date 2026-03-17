@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-16)
 
 **Core value:** Migrar o app legado para uma base moderna sem perder a aparencia operacional conhecida.
-**Current focus:** Phase 3 - Catalogo e busca global
+**Current focus:** Phase 4 - Busca de produto e associacao
 
 ## Current Position
 
-Phase: 3 of 7 (Catalogo e busca global)
-Plan: 0 of 3 in current phase
-Status: Ready to plan
-Last activity: 2026-03-16 - Item Inventarios recolocado no drawer entre Produtos e Conferencias, com APK e registro visual atualizados
+Phase: 4 of 7 (Busca de produto e associacao)
+Plan: 0 of 2 in current phase
+Status: Ready to discuss
+Last activity: 2026-03-16 - Fase 3 executada com Produtos, Buscar Produtos, dialogos, screenshots e APK
 
-Progress: [###-------] 30%
+Progress: [####------] 43%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 6
 - Average duration: 10 min
-- Total execution time: 1.0 hours
+- Total execution time: 1.7 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [###-------] 30%
 |-------|-------|-------|----------|
 | 1 | 3 | 27 min | 9 min |
 | 2 | 3 | 34 min | 11 min |
+| 3 | 3 | 41 min | 14 min |
 
 **Recent Trend:**
-- Last 5 plans: 9m, 9m, 11m, 12m, 11m
-- Trend: Slight increase from added UI complexity
+- Last 5 plans: 11m, 12m, 11m, 14m, 15m
+- Trend: Stable with mild increase from visual scope and screenshot validation
 
 ## Accumulated Context
 
@@ -55,6 +56,11 @@ Recent decisions affecting current work:
 - [Global]: O menu inicial agora prioriza `Buscar Produtos`, `Produtos`, `Conferencias`, `Configuracoes` e `Sair`, com submenu expansivel para `Nota Fiscal` e `Movimentacao de Estoque`.
 - [Global]: `Inventarios` voltou ao drawer entre `Produtos` e `Conferencias`.
 - [Global]: O app inteiro passou a usar cantos retos em vez de bordas arredondadas.
+- [Phase 3]: `Buscar Produtos` e o nome visivel da antiga `Busca Global`, mantendo contadores, targets e seletor de tipo.
+- [Phase 3]: A copy do app deve evitar linguagem muito tecnica ou de bastidor.
+- [Phase 3]: `Produtos` e `Buscar Produtos` sairam dos placeholders e entraram como telas reais no `NavHost`.
+- [Phase 3]: `Buscar Produtos` ganhou dialogos para `Reduzido`, `EAN-13` e `Tag`, mantendo `Produto` como busca simples na mesma tela.
+- [Phase 3]: O drawer passou a usar copy mais direta, sem contagem de fluxos nem textos de bastidor.
 
 ### Pending Todos
 
@@ -62,11 +68,11 @@ None yet.
 
 ### Blockers/Concerns
 
-- Nenhum bloqueio ativo para iniciar a Fase 3.
+- Nenhum bloqueio ativo para iniciar a Fase 4.
 - A integracao RFID futura ainda depende de adaptacao do SDK legado para Android atual.
 
 ## Session Continuity
 
-Last session: 2026-03-16 22:29
-Stopped at: Mudanca visual do menu inicial registrada com antes/depois e codigo compilando; proxima acao recomendada e validar no APK ou seguir para o proximo ajuste
-Resume file: registro-visual/README.md
+Last session: 2026-03-16 23:35
+Stopped at: Fase 3 concluida e pronta para discutir a Fase 4
+Resume file: .planning/phases/03-catalogo-e-busca-global/03-VERIFICATION.md

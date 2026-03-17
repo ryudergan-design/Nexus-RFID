@@ -41,7 +41,7 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - A marca deixa de usar a nuvem anterior e passa a usar assinatura Nexus RFID.
 - O azul principal sai do tom corporativo antigo e entra na familia azul Nexus.
 - Os fundos continuam claros, mas com base azulada bem suave em vez de branco neutro seco.
-- Campos, cards e botoes ficam mais limpos e opacos, com bordas suaves e menos cara de sistema legado puro.
+- Campos, cards e botoes ficam mais limpos e opacos, com cantos retos e menos cara de sistema legado puro.
 - O RFID entra apenas como detalhe de sinal, leitura ou pulso, nunca como ilustracao exagerada.
 
 ## Principios visuais
@@ -97,6 +97,12 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - Titulos principais com peso firme
 - Labels de acao com leve espacamento entre letras
 - Corpo com leitura objetiva e alta legibilidade
+
+### Texto e copy
+
+- A interface deve soar como produto final, nao como ambiente tecnico.
+- Evitar textos de bastidor como quantidade de fluxos, atalhos prontos, estados internos ou resumos de implementacao.
+- Preferir textos curtos, operacionais e autoexplicativos.
 
 ## Conceito de logo
 
@@ -156,7 +162,7 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 ### Cards de inventario
 
 - Continuam densos
-- Ficam com cantos mais suaves
+- Ficam com cantos retos
 - Borda leve em vez de sombra forte
 - Devem agrupar metadados em superfice interna clara para leitura rapida
 
@@ -202,5 +208,7 @@ O app deve parecer parte do ecossistema Nexus, mas sem perder a objetividade ope
 - `Login`: faixa tonal superior clara, selo `Plataforma Nexus`, marca `Nexus RFID` e card de acesso com borda suave.
 - `Departamentos`: card de contexto da sessao, lista em superficie unica e entradas com codigo em selo.
 - `Inventario`: card de contexto, resumo de atualizacao e cartoes com acento lateral e metadados agrupados.
-- `Drawer`: cabecalho com status da sessao, versao e itens com texto de apoio.
+- `Drawer`: cabecalho com acesso rapido, versao e itens com texto de apoio mais simples.
 - `Top bar`: agora usa assinatura Nexus RFID acima do titulo da tela.
+- `Produtos`: consulta direta com campo de busca, botao principal e lista densa de resultados.
+- `Buscar Produtos`: tela com acoes superiores, contadores, filtros, seletor de tipo e dialogos manuais em branco.

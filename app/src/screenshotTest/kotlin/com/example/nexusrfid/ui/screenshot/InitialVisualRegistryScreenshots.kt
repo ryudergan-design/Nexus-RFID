@@ -14,10 +14,12 @@ import com.android.tools.screenshot.PreviewTest
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.ui.components.DrawerMenu
 import com.example.nexusrfid.ui.navigation.AppDestination
+import com.example.nexusrfid.ui.screens.globalsearch.GlobalSearchScreen
 import com.example.nexusrfid.ui.screens.core.PhasePlaceholderScreen
 import com.example.nexusrfid.ui.screens.departments.DepartmentsScreen
 import com.example.nexusrfid.ui.screens.inventory.InventoryScreen
 import com.example.nexusrfid.ui.screens.login.LoginScreen
+import com.example.nexusrfid.ui.screens.products.ProductsScreen
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.NexusRFIDTheme
 
@@ -112,7 +114,12 @@ fun InventoryDrawerVisualRegistryScreenshot() {
 )
 @Composable
 fun ProductsVisualRegistryScreenshot() {
-    PlaceholderRegistryScreen(AppDestination.Products)
+    NexusRFIDTheme {
+        ProductsScreen(
+            products = MockDataSource.products,
+            onMenuClick = {}
+        )
+    }
 }
 
 @PreviewTest
@@ -125,7 +132,15 @@ fun ProductsVisualRegistryScreenshot() {
 )
 @Composable
 fun GlobalSearchVisualRegistryScreenshot() {
-    PlaceholderRegistryScreen(AppDestination.GlobalSearch)
+    NexusRFIDTheme {
+        GlobalSearchScreen(
+            products = MockDataSource.products,
+            searchSummary = MockDataSource.searchSummary,
+            searchTargets = MockDataSource.searchTargets,
+            searchTypes = MockDataSource.searchTypes,
+            onMenuClick = {}
+        )
+    }
 }
 
 @PreviewTest
@@ -246,49 +261,44 @@ private fun PlaceholderRegistryScreen(destination: AppDestination) {
 
 private fun placeholderLinesFor(destination: AppDestination): List<String> {
     return when (destination) {
-        AppDestination.Products -> MockDataSource.products.take(4).map { "${it.name} - ${it.code}" }
-        AppDestination.GlobalSearch -> listOf(
-            "Contadores: Lidas e Encontradas",
-            "Acoes: iniciar, parar, potencia, som",
-            "Tipos: Produto, Reduzido, Ean-13, Tag"
-        )
-
         AppDestination.AssociateTags -> listOf(
-            "Mesmo esqueleto da busca de produto",
-            "Busca por referencia, cor e tamanho",
-            "Feedback de carregamento enxuto"
+            "Selecione o produto desejado",
+            "Associe a etiqueta ao item",
+            "Continue com a leitura depois do vinculo"
         )
 
         AppDestination.Invoice -> listOf(
-            "Empty state centralizado",
-            "Acao verde para leitura da NF"
+            "Leia a nota fiscal",
+            "Confira os itens recebidos"
         )
 
         AppDestination.Movement -> listOf(
-            "Mesmo componente base da Nota Fiscal",
-            "Texto adaptado para movimentacao"
+            "Confira entrada e saida",
+            "Visual semelhante ao da nota fiscal"
         )
 
         AppDestination.Settings -> listOf(
-            "Secoes: leitor, configuracao e dispositivo padrao",
-            "Modal escuro de selecao",
-            "Dialogo escuro de permissao"
+            "Escolha o leitor",
+            "Defina o dispositivo padrao",
+            "Ajuste preferencias da operacao"
         )
 
         AppDestination.FreeRead -> listOf(
-            "Controles de leitura no topo",
-            "Linhas repetidas de SET/GET",
-            "Parametros de RF densos e tecnicos"
+            "Acompanhe as leituras em tempo real",
+            "Ajuste os principais comandos",
+            "Veja os dados durante a leitura"
         )
 
         AppDestination.Devices -> listOf(
-            "Lista branca simples",
-            "Fechar no topo direito",
-            "Preparada para descoberta real na Fase 7"
+            "Veja os dispositivos disponiveis",
+            "Escolha com qual deseja conectar",
+            "Fluxo pronto para a integracao futura"
         )
 
         AppDestination.Login,
         AppDestination.Departments,
-        AppDestination.Inventory -> emptyList()
+        AppDestination.Inventory,
+        AppDestination.Products,
+        AppDestination.GlobalSearch -> emptyList()
     }
 }

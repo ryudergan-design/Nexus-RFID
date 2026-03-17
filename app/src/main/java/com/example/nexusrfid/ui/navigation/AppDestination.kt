@@ -8,63 +8,61 @@ enum class AppDestination(
     Login(
         route = "login",
         title = "Login",
-        summary = "Fluxo inicial com logo central, campos simples e botao principal."
+        summary = "Acesso inicial com usuario, senha e entrada no app."
     ),
     Departments(
         route = "departments",
         title = "Departamentos",
-        summary = "Lista densa de departamentos e empresas com leitura direta."
+        summary = "Escolha o departamento para seguir no app."
     ),
     Inventory(
         route = "inventory",
         title = "Inventario",
-        summary = "Cards operacionais com responsavel, data e quantidade."
+        summary = "Lista de inventarios com responsavel, data e quantidade."
     ),
     Products(
         route = "products",
         title = "Produtos",
-        summary = "Busca simples com lista textual de produtos e codigo."
+        summary = "Consulta simples de produtos com pesquisa e resultados."
     ),
     GlobalSearch(
         route = "global_search",
         title = "Buscar Produtos",
-        summary = "Fluxo de busca operacional com leitura, contadores e selecao do tipo de consulta."
+        summary = "Busca com contadores, filtros e tipo de consulta."
     ),
     AssociateTags(
         route = "associate_tags",
         title = "Associar Tags",
-        summary = "Busca de produto orientada a associacao de etiqueta."
+        summary = "Associe uma etiqueta a um produto localizado."
     ),
     Invoice(
         route = "invoice",
         title = "Nota Fiscal",
-        summary = "Estado vazio com leitura de codigo de barras da NF."
+        summary = "Conferencia de nota fiscal com leitura dos itens."
     ),
     Movement(
         route = "movement",
         title = "Movimentacao de Estoque",
-        summary = "Conferencia de estoque com empty state semelhante ao fluxo de nota fiscal."
+        summary = "Conferencia das movimentacoes do estoque."
     ),
     Settings(
         route = "settings",
         title = "Configuracoes",
-        summary = "Secoes do leitor, selecao de dispositivo e modais escuros."
+        summary = "Ajustes do leitor, dispositivo e preferencias."
     ),
     FreeRead(
         route = "free_read",
         title = "Leitura Livre",
-        summary = "Painel tecnico com controles, toggles e linhas SET/GET."
+        summary = "Leitura livre para acompanhar etiquetas em tempo real."
     ),
     Devices(
         route = "devices",
         title = "Dispositivos",
-        summary = "Lista utilitaria de dispositivos encontrados."
+        summary = "Lista de dispositivos disponiveis para conexao."
     );
 
     companion object {
         val placeholderFlows = listOf(
-            Products,
-            GlobalSearch,
             AssociateTags,
             Invoice,
             Movement,
