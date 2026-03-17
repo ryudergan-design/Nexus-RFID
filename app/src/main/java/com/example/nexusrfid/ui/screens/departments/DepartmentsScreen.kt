@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import com.example.nexusrfid.data.mock.DepartmentListItem
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.ui.components.AppTopBar
-import com.example.nexusrfid.ui.components.NexusIntroCard
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
@@ -50,7 +49,7 @@ fun DepartmentsScreen(
         topBar = {
             AppTopBar(
                 title = "Departamentos",
-                eyebrow = "Sessao inicial",
+                eyebrow = null,
                 onNavigationClick = onMenuClick
             )
         }
@@ -60,61 +59,9 @@ fun DepartmentsScreen(
                 .fillMaxSize()
                 .background(AppColors.ScreenBackground)
                 .padding(innerPadding),
-            contentPadding = PaddingValues(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            contentPadding = PaddingValues(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            item {
-                NexusIntroCard(
-                    eyebrow = "Operacao pronta",
-                    title = "Escolha um departamento",
-                    description = "A sessao ja foi iniciada. Selecione a base operacional para continuar o inventario.",
-                    statLabel = "ativos",
-                    statValue = departments.size.toString()
-                )
-            }
-
-            item {
-                Card(
-                    shape = AppShapes.card,
-                    colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-                    border = BorderStroke(1.dp, AppColors.Divider),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(AppSpacing.lg),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        androidx.compose.foundation.layout.Column(
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "Departamentos disponiveis",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = AppColors.TextPrimary
-                            )
-                            Text(
-                                text = "Toque para abrir os inventarios vinculados.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppColors.TextSecondary
-                            )
-                        }
-
-                        Text(
-                            text = "${departments.size} itens",
-                            modifier = Modifier
-                                .background(AppColors.FieldBackground, AppShapes.button)
-                                .border(1.dp, AppColors.Divider, AppShapes.button)
-                                .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AppColors.TopBarBlue
-                        )
-                    }
-                }
-            }
-
             items(departments) { department ->
                 DepartmentEntryCard(
                     department = department,
@@ -150,12 +97,8 @@ private fun DepartmentEntryCard(
             ) {
                 Text(
                     text = department.code,
-                    modifier = Modifier
-                        .background(AppColors.CardSurface, AppShapes.button)
-                        .border(1.dp, AppColors.Divider, AppShapes.button)
-                        .padding(horizontal = AppSpacing.sm, vertical = AppSpacing.xxs),
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TopBarBlue,
+                    color = AppColors.TextSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -165,11 +108,6 @@ private fun DepartmentEntryCard(
                     color = AppColors.TextPrimary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "Abrir inventarios deste departamento",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TextSecondary
                 )
             }
 

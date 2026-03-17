@@ -103,6 +103,7 @@ O Nexus RFID nao vai mais copiar literalmente a estetica do app legado. A partir
 - A interface deve soar como produto final, nao como ambiente tecnico.
 - Evitar textos de bastidor como quantidade de fluxos, atalhos prontos, estados internos ou resumos de implementacao.
 - Preferir textos curtos, operacionais e autoexplicativos.
+- Evitar cards introdutorios e blocos explicativos quando a tela puder ser entendida so pela estrutura operacional.
 
 ## Conceito de logo
 
@@ -212,3 +213,9 @@ O app deve parecer parte do ecossistema Nexus, mas sem perder a objetividade ope
 - `Top bar`: agora usa assinatura Nexus RFID acima do titulo da tela.
 - `Produtos`: consulta direta com campo de busca, botao principal e lista densa de resultados.
 - `Buscar Produtos`: tela com acoes superiores, contadores, filtros, seletor de tipo e dialogos manuais em branco.
+
+## Ajuste de fidelidade visual
+
+- As telas ativas devem ficar mais proximas das fotos de referencia, mesmo quando isso significar reduzir elementos de apoio da identidade Nexus.
+- Drawer, Departamentos, Inventario, Produtos e Buscar Produtos passaram a priorizar leitura operacional direta.
+- Blocos explicativos como cabecalhos descritivos e cards de contexto devem ser evitados nessas telas.

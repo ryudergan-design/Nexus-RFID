@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-16)
 Phase: 4 of 7 (Busca de produto e associacao)
 Plan: 0 of 2 in current phase
 Status: Ready to discuss
-Last activity: 2026-03-16 - Fase 3 executada com Produtos, Buscar Produtos, dialogos, screenshots e APK
+Last activity: 2026-03-16 - Ajuste visual aplicado para aproximar drawer e telas operacionais das fotos de referencia
 
 Progress: [####------] 43%
 
@@ -61,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 3]: `Produtos` e `Buscar Produtos` sairam dos placeholders e entraram como telas reais no `NavHost`.
 - [Phase 3]: `Buscar Produtos` ganhou dialogos para `Reduzido`, `EAN-13` e `Tag`, mantendo `Produto` como busca simples na mesma tela.
 - [Phase 3]: O drawer passou a usar copy mais direta, sem contagem de fluxos nem textos de bastidor.
+- [Global]: Drawer, Departamentos, Inventario, Produtos e Buscar Produtos foram simplificados para ficar mais proximos das fotos de referencia.
+- [Global]: Blocos explicativos e cards introdutorios devem ser evitados nas telas operacionais ativas.
 
 ### Pending Todos
 
@@ -73,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-16 23:35
-Stopped at: Fase 3 concluida e pronta para discutir a Fase 4
-Resume file: .planning/phases/03-catalogo-e-busca-global/03-VERIFICATION.md
+Last session: 2026-03-16 23:50
+Stopped at: Ajuste visual concluido com screenshots e APK atualizados
+Resume file: .planning/VISUAL-IDENTITY.md

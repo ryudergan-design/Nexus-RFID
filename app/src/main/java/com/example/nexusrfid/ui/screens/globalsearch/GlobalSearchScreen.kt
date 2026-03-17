@@ -46,7 +46,6 @@ import com.example.nexusrfid.ui.components.AppDialog
 import com.example.nexusrfid.ui.components.AppTopBar
 import com.example.nexusrfid.ui.components.CounterBar
 import com.example.nexusrfid.ui.components.EmptyStateBox
-import com.example.nexusrfid.ui.components.NexusIntroCard
 import com.example.nexusrfid.ui.components.SearchHeader
 import com.example.nexusrfid.ui.components.SearchTypeSheet
 import com.example.nexusrfid.ui.components.SimpleListRow
@@ -124,36 +123,27 @@ fun GlobalSearchScreen(
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = AppColors.ScreenBackground,
-            topBar = {
-                AppTopBar(
-                    title = "Buscar Produtos",
-                    eyebrow = "Localizacao",
-                    onNavigationClick = onMenuClick
-                )
-            }
+        containerColor = AppColors.ScreenBackground,
+        topBar = {
+            AppTopBar(
+                title = "Buscar Produtos",
+                eyebrow = null,
+                onNavigationClick = onMenuClick
+            )
+        }
         ) { innerPadding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(AppColors.ScreenBackground)
                     .padding(innerPadding),
-                contentPadding = PaddingValues(AppSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                contentPadding = PaddingValues(AppSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
             ) {
-                item {
-                    NexusIntroCard(
-                        eyebrow = if (readingActive) "Leitura ativa" else "Busca pronta",
-                        title = "Localize produtos",
-                        description = "Escolha o tipo de busca e informe o valor para consultar os itens.",
-                        statLabel = "encontradas",
-                        statValue = searchSummary.foundCount.toString()
-                    )
-                }
-
                 item {
                     SearchActionRow(
                         currentType = selectedType.label,
+                        currentValue = searchValue,
                         readingActive = readingActive,
                         onStartReading = { readingActive = true },
                         onStopReading = { readingActive = false },
@@ -175,19 +165,6 @@ fun GlobalSearchScreen(
                 }
 
                 item {
-                    CurrentTypeCard(
-                        selectedType = selectedType,
-                        searchValue = searchValue,
-                        onOpenType = { showTypeSheet = true },
-                        onOpenDialog = {
-                            if (selectedType.requiresManualEntry) {
-                                openDialogFor(selectedType)
-                            }
-                        }
-                    )
-                }
-
-                item {
                     TargetSelector(
                         targets = searchTargets,
                         products = products,
@@ -202,7 +179,6 @@ fun GlobalSearchScreen(
                             value = productInput,
                             onValueChange = { productInput = it },
                             onSearchClick = { searchValue = productInput.trim() },
-                            sectionTitle = "Buscar por produto",
                             placeholder = "Nome, codigo, reduzido ou EAN"
                         )
                     }
@@ -276,6 +252,7 @@ fun GlobalSearchScreen(
 @Composable
 private fun SearchActionRow(
     currentType: String,
+    currentValue: String,
     readingActive: Boolean,
     onStartReading: () -> Unit,
     onStopReading: () -> Unit,
@@ -292,38 +269,9 @@ private fun SearchActionRow(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                .padding(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
-                    Text(
-                        text = "Acoes",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = AppColors.TextPrimary
-                    )
-                    Text(
-                        text = "Tipo atual: $currentType",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TextSecondary
-                    )
-                }
-
-                Text(
-                    text = if (readingActive) "Lendo" else "Em espera",
-                    modifier = Modifier
-                        .background(AppColors.FieldBackground, AppShapes.button)
-                        .border(1.dp, AppColors.Divider, AppShapes.button)
-                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TopBarBlue
-                )
-            }
-
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val itemWidth = (maxWidth - (AppSpacing.sm * 3)) / 4
 
@@ -354,6 +302,32 @@ private fun SearchActionRow(
                     )
                 }
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = currentType,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppColors.TextSecondary
+                )
+
+                if (currentValue.isNotBlank()) {
+                    Text(
+                        text = currentValue,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TopBarBlue
+                    )
+                } else {
+                    Text(
+                        text = if (readingActive) "Lendo" else "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AppColors.TopBarBlue
+                    )
+                }
+            }
         }
     }
 }
@@ -367,7 +341,7 @@ private fun ActionCell(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(48.dp),
+        modifier = modifier.height(44.dp),
         shape = AppShapes.button,
         border = BorderStroke(
             width = 1.dp,
@@ -382,91 +356,6 @@ private fun ActionCell(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-private fun CurrentTypeCard(
-    selectedType: SearchTypeOption,
-    searchValue: String,
-    onOpenType: () -> Unit,
-    onOpenDialog: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = AppShapes.card,
-        colors = CardDefaults.cardColors(containerColor = AppColors.CardSurface),
-        border = BorderStroke(1.dp, AppColors.Divider),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppSpacing.lg),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.padding(end = AppSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)
-            ) {
-                Text(
-                    text = "Tipo selecionado",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = AppColors.TextPrimary
-                )
-                Text(
-                    text = selectedType.label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = AppColors.TopBarBlue
-                )
-                Text(
-                    text = if (searchValue.isBlank()) {
-                        "Nenhum valor informado."
-                    } else {
-                        "Valor atual: $searchValue"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TextSecondary
-                )
-            }
-
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-            ) {
-                ActionTag(
-                    label = "Trocar tipo",
-                    onClick = onOpenType
-                )
-                if (selectedType.requiresManualEntry) {
-                    ActionTag(
-                        label = if (searchValue.isBlank()) "Informar" else "Alterar",
-                        onClick = onOpenDialog
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActionTag(
-    label: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .background(AppColors.FieldBackground, AppShapes.button)
-            .border(1.dp, AppColors.Divider, AppShapes.button)
-            .clickable(onClick = onClick)
-            .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = AppColors.TopBarBlue
         )
     }
 }
@@ -488,15 +377,9 @@ private fun TargetSelector(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+                .padding(horizontal = AppSpacing.md, vertical = AppSpacing.sm),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            Text(
-                text = "Filtros",
-                style = MaterialTheme.typography.titleSmall,
-                color = AppColors.TextPrimary
-            )
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -578,53 +461,13 @@ private fun SearchResultsCard(
         border = BorderStroke(1.dp, AppColors.Divider),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = AppSpacing.lg,
-                        end = AppSpacing.lg,
-                        top = AppSpacing.lg
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xxs)) {
-                    Text(
-                        text = "Produtos localizados",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = AppColors.TextPrimary
-                    )
-                    Text(
-                        text = "Filtro atual: $selectedTarget",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppColors.TextSecondary
-                    )
-                }
-
-                Text(
-                    text = "${products.size}",
-                    modifier = Modifier
-                        .background(AppColors.FieldBackground, AppShapes.button)
-                        .border(1.dp, AppColors.Divider, AppShapes.button)
-                        .padding(horizontal = AppSpacing.md, vertical = AppSpacing.xxs),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = AppColors.TopBarBlue
+        Column(modifier = Modifier.fillMaxWidth()) {
+            products.forEachIndexed { index, product ->
+                SimpleListRow(
+                    title = product.name,
+                    subtitle = "Cod. ${product.code}  |  $selectedTarget  |  ${targetStateLabel(product.targetState)}",
+                    showDivider = index < products.lastIndex
                 )
-            }
-
-            Column(modifier = Modifier.fillMaxWidth()) {
-                products.forEachIndexed { index, product ->
-                    SimpleListRow(
-                        title = product.name,
-                        subtitle = "Cod. ${product.code}  |  ${targetStateLabel(product.targetState)}",
-                        showDivider = index < products.lastIndex
-                    )
-                }
             }
         }
     }

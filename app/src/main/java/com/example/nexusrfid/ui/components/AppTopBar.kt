@@ -32,7 +32,7 @@ fun AppTopBar(
     onNavigationClick: (() -> Unit)? = null,
     navigationIcon: ImageVector = Icons.Outlined.Menu,
     navigationContentDescription: String = "Abrir menu",
-    eyebrow: String = "Nexus RFID",
+    eyebrow: String? = "Nexus RFID",
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(
@@ -43,13 +43,15 @@ fun AppTopBar(
             TopAppBar(
                 title = {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(
-                            text = eyebrow,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AppColors.TopBarOnBlue.copy(alpha = 0.72f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        if (!eyebrow.isNullOrBlank()) {
+                            Text(
+                                text = eyebrow,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AppColors.TopBarOnBlue.copy(alpha = 0.72f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleMedium,

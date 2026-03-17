@@ -25,7 +25,6 @@ import com.example.nexusrfid.data.mock.InventoryCardItem
 import com.example.nexusrfid.data.mock.MockDataSource
 import com.example.nexusrfid.ui.components.AppTopBar
 import com.example.nexusrfid.ui.components.InventoryCard
-import com.example.nexusrfid.ui.components.NexusIntroCard
 import com.example.nexusrfid.ui.theme.AppColors
 import com.example.nexusrfid.ui.theme.AppShapes
 import com.example.nexusrfid.ui.theme.AppSpacing
@@ -37,7 +36,6 @@ fun InventoryScreen(
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusedCount = inventories.count { it.selected }
     val latestUpdate = inventories.firstOrNull()?.dateTime ?: "-"
 
     Scaffold(
@@ -46,7 +44,7 @@ fun InventoryScreen(
         topBar = {
             AppTopBar(
                 title = "Inventario",
-                eyebrow = "Fluxo principal",
+                eyebrow = null,
                 onNavigationClick = onMenuClick
             )
         }
@@ -56,19 +54,9 @@ fun InventoryScreen(
                 .fillMaxSize()
                 .background(AppColors.ScreenBackground)
                 .padding(innerPadding),
-            contentPadding = PaddingValues(AppSpacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AppSpacing.md)
+            contentPadding = PaddingValues(AppSpacing.md),
+            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
         ) {
-            item {
-                NexusIntroCard(
-                    eyebrow = "Leitura em andamento",
-                    title = "Escolha um inventario",
-                    description = "Continue por uma lista recente ou priorize a que ja esta em foco para iniciar a leitura RFID.",
-                    statLabel = if (focusedCount > 0) "em foco" else "listas",
-                    statValue = if (focusedCount > 0) focusedCount.toString() else inventories.size.toString()
-                )
-            }
-
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -88,7 +76,7 @@ fun InventoryScreen(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             Text(
-                                text = "Inventarios recentes",
+                                text = "Inventarios",
                                 style = MaterialTheme.typography.titleSmall,
                                 color = AppColors.TextPrimary
                             )
